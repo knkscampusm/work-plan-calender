@@ -472,7 +472,7 @@ input, textarea { font-family: inherit; }
   color: var(--teal);
   border: 1px solid rgba(45,212,191,.4);
 }
-.todo-text { flex: 1; min-width: 0; word-break: break-all; cursor: default; }
+.todo-text { flex: 1; min-width: 0; word-break: break-all; cursor: pointer; }
 .todo-text.expandable { cursor: pointer; }
 .todo-text.expandable:hover { color: var(--teal); }
 .todo-del {
@@ -1082,8 +1082,8 @@ function render() {
         const isLong = t.text.length > 50;
         const short = isLong ? escHtml(t.text.slice(0,50)) + '<span class="ellipsis">…</span>' : full;
         const textHtml = isLong
-          ? `<span class="todo-text expandable" title="클릭: 전문보기 / 더블클릭: 수정" onclick="openTextModal(this.dataset.full)" ondblclick="event.stopPropagation();startEditTodo('${s.id}','${dk}','${t.id}',this.closest('.todo-item'))" data-full="${t.text}">${short}</span>`
-          : `<span class="todo-text" title="더블클릭: 수정" ondblclick="startEditTodo('${s.id}','${dk}','${t.id}',this.closest('.todo-item'))">${full}</span>`;
+          ? `<span class="todo-text expandable" title="클릭: 수정" onclick="startEditTodo('${s.id}','${dk}','${t.id}')">${short}</span>`
+          : `<span class="todo-text" title="클릭: 수정" onclick="startEditTodo('${s.id}','${dk}','${t.id}')">${full}</span>`;
         return `<div class="todo-item ${itemCls}" id="ti-${t.id}" draggable="true"
           ondragstart="onTodoDragStart(event,'${s.id}','${dk}','${t.id}')"
           ondragend="onTodoDragEnd(event)">
@@ -1195,12 +1195,14 @@ async function deleteTodo(staffId, dk, id) {
   }
 }
 
-function startEditTodo(staffId, dk, id, itemEl) {
-  const textEl = itemEl.querySelector('.todo-text');
-  const currentText = textEl.dataset.full || textEl.textContent.replace('…','').trim();
+function startEditTodo(staffId, dk, id) {
+  // todos 객체에서 직접 원문 가져오기 (HTML escape 문제 없음)
+  const key = `${staffId}_${dk}`;
+  const item = (todos[key]||[]).find(t => t.id === id);
+  if(!item) return;
   _editCtx = { staffId, dk, id };
   const inp = document.getElementById('edit-modal-input');
-  inp.value = currentText;
+  inp.value = item.text;
   document.getElementById('edit-modal').classList.add('on');
   setTimeout(() => { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }, 50);
 }
@@ -1208,10 +1210,12 @@ function closeEditModal() {
   document.getElementById('edit-modal').classList.remove('on');
   _editCtx = null;
 }
-document.addEventListener('keydown', e => {
-  if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-    if(document.getElementById('edit-modal').classList.contains('on')) confirmEditTodo();
+document.getElementById('edit-modal').addEventListener('keydown', e => {
+  if(e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    confirmEditTodo();
   }
+  // Shift+Enter는 기본 동작(줄바꿈) 허용
 });
 
 async function confirmEditTodo() {
@@ -1246,14 +1250,16 @@ async function updateTodo(staffId, dk, id, newText) {
         textEl.dataset.full = newText;
         textEl.innerHTML = short;
         textEl.onclick = () => openTextModal(textEl.dataset.full);
-        textEl.ondblclick = (e) => { e.stopPropagation(); startEditTodo(staffId, dk, id, itemEl); };
+        textEl.onclick = () => startEditTodo(staffId, dk, id);
+      textEl.ondblclick = null;
       } else {
         textEl.className = 'todo-text';
         textEl.title = '더블클릭: 수정';
         textEl.dataset.full = '';
         textEl.innerHTML = escHtml(newText);
         textEl.onclick = null;
-        textEl.ondblclick = (e) => { e.stopPropagation(); startEditTodo(staffId, dk, id, itemEl); };
+        textEl.onclick = () => startEditTodo(staffId, dk, id);
+      textEl.ondblclick = null;
       }
     }
   }
