@@ -218,6 +218,25 @@ input, textarea { font-family: inherit; }
   transition: background .12s;
 }
 .day-cell:last-child { border-right: none; }
+.sch-cell {
+  background: rgba(13,148,136,.03);
+  border-right: 2px solid rgba(13,148,136,.2) !important;
+}
+.sch-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 3px 6px;
+  background: rgba(13,148,136,.08);
+  border: 1px solid rgba(13,148,136,.2);
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--teal);
+  line-height: 1.4;
+}
+.sch-item:hover { background: rgba(13,148,136,.14); }
+.sch-text { flex: 1; word-break: break-all; min-width: 0; }
 .day-cell.today-col { background: var(--teal-dim2); }
 .day-cell.past { opacity: .55; }
 .day-cell:hover { background: rgba(255,255,255,.02); }
@@ -628,6 +647,7 @@ let db = null;
 let weekOffset = 0;
 let staff = [];      // [{id, name, color}]
 let todos = {};      // { "staffId_YYYY-MM-DD": [{id, text, done}] }
+let schedules = {}; // { "YYYY-MM-DD": [{id, text}] }
 let selectedColor = COLORS[0];
 let listeners = [];
 
@@ -702,12 +722,15 @@ function render() {
   empty.style.display = 'none';
 
   // 그리드 컬럼 = 날짜라벨 + 직원수
-  const colTpl = `52px repeat(${staff.length}, 1fr)`;
+  const colTpl = `52px 140px repeat(${staff.length}, 1fr)`;
   document.getElementById('week-hdr').style.gridTemplateColumns = colTpl;
 
   // 주간 헤더: 직원 이름 가로
   const whdr = document.getElementById('week-hdr');
-  whdr.innerHTML = `<div class="wh-spacer"></div>` +
+  whdr.innerHTML = `<div class="wh-spacer"></div>
+    <div class="wh-staff wh-schedule-hd">
+      <span style="font-size:11px;font-weight:800;color:var(--teal)">📅 학사일정</span>
+    </div>` +
     staff.map(s => `
       <div class="wh-staff">
         <div class="wh-staff-dot" style="background:${s.color}"></div>
@@ -745,10 +768,22 @@ function render() {
       </div>`;
     }).join('');
 
+    const schItems = (schedules[dk] || []);
+    const schHtml = schItems.map(sc => `
+      <div class="sch-item" id="sci-${sc.id}">
+        <span class="sch-text">${escHtml(sc.text)}</span>
+        <button class="todo-del" onclick="deleteSchedule('${dk}','${sc.id}')">✕</button>
+      </div>
+    `).join('');
+
     return `<div class="day-row ${rowCls}" style="grid-template-columns:${colTpl}">
       <div class="day-label">
         <div class="day-label-dn">${DAY_KO[dow]}요일</div>
         <div class="day-label-dd">${d.getDate()}</div>
+      </div>
+      <div class="day-cell sch-cell">
+        ${schHtml}
+        <button class="add-btn" onclick="startAddSchedule('${dk}',this)" title="학사일정 추가">+</button>
       </div>
       ${cells}
     </div>`;
@@ -841,6 +876,52 @@ async function cycleStatus(staffId, dk, id) {
     try {
       await db.ref(`${todoPath(staffId, dk)}/${id}/status`).set(item.status);
     } catch(e) {}
+  }
+}
+
+/* ══════════════════════════════
+   학사일정 CRUD
+══════════════════════════════ */
+function startAddSchedule(dk, btn) {
+  const exist = btn.parentElement.querySelector('.inline-input-wrap');
+  if(exist) { exist.remove(); btn.style.display='flex'; return; }
+  btn.style.display = 'none';
+  const wrap = document.createElement('div');
+  wrap.className = 'inline-input-wrap';
+  wrap.innerHTML = `<input class="inline-input" placeholder="일정 입력" maxlength="40" autofocus>
+    <button class="inline-ok">↵</button>`;
+  btn.parentElement.insertBefore(wrap, btn);
+  const inp = wrap.querySelector('input');
+  inp.focus();
+  const save = () => {
+    const v = inp.value.trim();
+    if(v) addSchedule(dk, v);
+    wrap.remove(); btn.style.display='flex';
+  };
+  inp.addEventListener('keydown', e => {
+    if(e.key==='Enter') save();
+    if(e.key==='Escape') { wrap.remove(); btn.style.display='flex'; }
+  });
+  wrap.querySelector('button').addEventListener('click', save);
+  inp.addEventListener('blur', () => setTimeout(() => { if(!wrap.contains(document.activeElement)) { wrap.remove(); btn.style.display='flex'; } }, 150));
+}
+
+async function addSchedule(dk, text) {
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2,4);
+  const item = { id, text };
+  if(!schedules[dk]) schedules[dk] = [];
+  schedules[dk].push(item);
+  render();
+  if(db) {
+    try { await db.ref(`schedules/${dk}/${id}`).set(item); } catch(e) {}
+  }
+}
+
+async function deleteSchedule(dk, id) {
+  schedules[dk] = (schedules[dk]||[]).filter(s => s.id !== id);
+  render();
+  if(db) {
+    try { await db.ref(`schedules/${dk}/${id}`).remove(); } catch(e) {}
   }
 }
 
@@ -973,6 +1054,16 @@ function startListening() {
     saveStaffLocal();
     render();
     renderStaffModal();
+  });
+
+  // 학사일정
+  db.ref('schedules').on('value', snap => {
+    const val = snap.val() || {};
+    schedules = {};
+    for(const [dk, items] of Object.entries(val)) {
+      schedules[dk] = Object.values(items);
+    }
+    render();
   });
 
   // 할일 전체
