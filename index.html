@@ -392,6 +392,18 @@ input, textarea { font-family: inherit; }
 }
 .add-sch-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-dim); }
 /* edit → modal 방식으로 변경 */
+/* 드래그 앤 드롭 */
+.todo-item.dragging {
+  opacity: .35;
+  transform: scale(.97);
+  cursor: grabbing;
+}
+.day-cell.drag-over {
+  background: rgba(13,148,136,.08) !important;
+  outline: 2px dashed var(--teal);
+  outline-offset: -2px;
+}
+.todo-item[draggable="true"] { cursor: grab; }
 .day-cell.today-col { background: var(--teal-dim2); }
 .day-cell.past { opacity: .55; }
 .day-cell:hover { background: rgba(255,255,255,.02); }
@@ -1071,13 +1083,18 @@ function render() {
         const textHtml = isLong
           ? `<span class="todo-text expandable" title="클릭: 전문보기 / 더블클릭: 수정" onclick="openTextModal(this.dataset.full)" ondblclick="event.stopPropagation();startEditTodo('${s.id}','${dk}','${t.id}',this.closest('.todo-item'))" data-full="${t.text}">${short}</span>`
           : `<span class="todo-text" title="더블클릭: 수정" ondblclick="startEditTodo('${s.id}','${dk}','${t.id}',this.closest('.todo-item'))">${full}</span>`;
-        return `<div class="todo-item ${itemCls}" id="ti-${t.id}">
+        return `<div class="todo-item ${itemCls}" id="ti-${t.id}" draggable="true"
+          ondragstart="onTodoDragStart(event,'${s.id}','${dk}','${t.id}')"
+          ondragend="onTodoDragEnd(event)">
           <button class="status-btn ${btnCls}" onclick="cycleStatus('${s.id}','${dk}','${t.id}')">${btnLbl}</button>
           ${textHtml}
           <button class="todo-del" onclick="deleteTodo('${s.id}','${dk}','${t.id}')">✕</button>
         </div>`;
       }).join('');
-      return `<div class="day-cell">
+      return `<div class="day-cell"
+        ondragover="onCellDragOver(event)"
+        ondragleave="onCellDragLeave(event)"
+        ondrop="onCellDrop(event,'${s.id}','${dk}')">
         ${todosHtml}
         <button class="add-btn" onclick="startAdd('${s.id}','${dk}',this)" title="할일 추가">+</button>
       </div>`;
@@ -1243,6 +1260,72 @@ async function updateTodo(staffId, dk, id, newText) {
   if(db) {
     try { await db.ref(`${todoPath(staffId, dk)}/${id}/text`).set(newText); } catch(e) {}
   }
+}
+
+/* ══════════════════════════════
+   드래그 앤 드롭
+══════════════════════════════ */
+let _drag = null; // { staffId, dk, id }
+
+function onTodoDragStart(e, staffId, dk, id) {
+  _drag = { staffId, dk, id };
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const el = document.getElementById(`ti-${id}`); if(el) el.classList.add('dragging'); }, 0);
+}
+
+function onTodoDragEnd(e) {
+  if(_drag) {
+    const el = document.getElementById(`ti-${_drag.id}`);
+    if(el) el.classList.remove('dragging');
+  }
+  document.querySelectorAll('.day-cell.drag-over').forEach(c => c.classList.remove('drag-over'));
+  _drag = null;
+}
+
+function onCellDragOver(e) {
+  if(!_drag) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+
+function onCellDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+async function onCellDrop(e, toStaffId, toDk) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(!_drag) return;
+
+  const { staffId: fromStaffId, dk: fromDk, id } = _drag;
+  _drag = null;
+
+  // 같은 셀이면 무시
+  if(fromStaffId === toStaffId && fromDk === toDk) return;
+
+  const fromKey = `${fromStaffId}_${fromDk}`;
+  const toKey   = `${toStaffId}_${toDk}`;
+
+  const fromList = todos[fromKey] || [];
+  const idx = fromList.findIndex(t => t.id === id);
+  if(idx < 0) return;
+
+  const [item] = fromList.splice(idx, 1);
+  if(!todos[toKey]) todos[toKey] = [];
+  todos[toKey].push(item);
+
+  render();
+  scrollToToday();
+
+  // Firebase 업데이트
+  if(db) {
+    try {
+      await db.ref(`${todoPath(fromStaffId, fromDk)}/${id}`).remove();
+      await db.ref(`${todoPath(toStaffId, toDk)}/${id}`).set(item);
+    } catch(e) { toast('이동 중 오류 발생','err'); }
+  }
+  toast('이동 완료 ✓', 'ok');
 }
 
 async function cycleStatus(staffId, dk, id) {
