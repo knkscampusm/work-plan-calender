@@ -127,6 +127,149 @@ input, textarea { font-family: inherit; }
 }
 .btn-staff:hover { background: var(--amber-dim); color: var(--amber); border-color: var(--amber); }
 
+/* ── 검색바 ── */
+#search-bar {
+  background: var(--white);
+  border-bottom: 1px solid var(--border2);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.search-input-wrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 440px;
+  background: var(--bg3);
+  border: 1.5px solid var(--border2);
+  border-radius: 8px;
+  padding: 0 10px;
+  gap: 6px;
+  transition: border-color .12s;
+}
+.search-input-wrap:focus-within { border-color: var(--teal); background: var(--white); }
+.search-icon { color: var(--text3); font-size: 13px; flex-shrink: 0; }
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 0;
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+}
+.search-input::placeholder { color: var(--text3); }
+.search-clear {
+  width: 18px; height: 18px;
+  border: none; background: var(--sl300);
+  border-radius: 50%; color: #fff; font-size: 10px;
+  cursor: pointer; display: none; align-items: center; justify-content: center;
+  flex-shrink: 0; font-weight: 900;
+}
+.search-clear.on { display: flex; }
+.search-clear:hover { background: var(--red); }
+
+/* 검색 결과 드롭다운 */
+#search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--border2);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 300;
+  box-shadow: 0 8px 24px rgba(0,0,0,.1);
+  display: none;
+}
+#search-results.on { display: block; }
+.sr-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .1s;
+}
+.sr-item:last-child { border-bottom: none; }
+.sr-item:hover { background: var(--sl50); }
+.sr-date {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--teal);
+  white-space: nowrap;
+  min-width: 72px;
+  font-family: 'DM Mono', monospace;
+}
+.sr-who {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sr-text {
+  font-size: 12px;
+  color: var(--ink);
+  line-height: 1.5;
+  flex: 1;
+}
+.sr-text mark {
+  background: #fef08a;
+  color: var(--ink);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+.sr-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.sr-status.done { background: var(--teal-dim); color: var(--teal); }
+.sr-status.ing  { background: var(--amber-dim); color: var(--amber); }
+.sr-empty { padding: 20px; text-align: center; color: var(--text3); font-size: 13px; }
+.search-wrap { position: relative; flex: 1; max-width: 440px; }
+.date-jump-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.date-jump-input {
+  padding: 7px 10px;
+  border: 1.5px solid var(--border2);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--white);
+  outline: none;
+  transition: border-color .12s;
+  cursor: pointer;
+}
+.date-jump-input:focus { border-color: var(--teal); }
+.date-jump-btn {
+  padding: 7px 14px;
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .12s;
+  white-space: nowrap;
+}
+.date-jump-btn:hover { background: #0f766e; }
+
 /* ── WEEK HEADER (직원 가로) ── */
 #week-hdr {
   display: grid;
@@ -661,6 +804,24 @@ input, textarea { font-family: inherit; }
   </div>
   <button class="btn-today" onclick="goToday()">오늘</button>
   <button class="btn-staff" onclick="openStaffModal()">👥 직원 관리</button>
+</div>
+
+<!-- 검색바 -->
+<div id="search-bar">
+  <div class="search-wrap">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="search-input" placeholder="할일 검색..." autocomplete="off"
+        oninput="onSearchInput(this.value)" onkeydown="if(event.key==='Escape')clearSearch()">
+      <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+    </div>
+    <div id="search-results"></div>
+  </div>
+  <div class="date-jump-wrap">
+    <input type="date" id="date-jump-input" class="date-jump-input"
+      onkeydown="if(event.key==='Enter')jumpToDate()">
+    <button class="date-jump-btn" onclick="jumpToDate()">이동</button>
+  </div>
 </div>
 
 <!-- WEEK HEADER -->
@@ -1224,6 +1385,110 @@ function startListening() {
 /* ══════════════════════════════
    유틸
 ══════════════════════════════ */
+/* ══════════════════════════════
+   검색
+══════════════════════════════ */
+let _searchTimer;
+function onSearchInput(q) {
+  document.getElementById('search-clear').classList.toggle('on', q.length > 0);
+  clearTimeout(_searchTimer);
+  if(!q.trim()) { closeSearchResults(); return; }
+  _searchTimer = setTimeout(() => doSearch(q.trim()), 200);
+}
+
+function doSearch(q) {
+  const lower = q.toLowerCase();
+  const results = [];
+
+  for(const s of staff) {
+    for(const [dk, items] of Object.entries(todos[s.id] || {})) {
+      for(const t of items) {
+        if(t.text.toLowerCase().includes(lower)) {
+          results.push({ dk, staffName: s.name, staffColor: s.color, text: t.text, status: t.status||'none' });
+        }
+      }
+    }
+  }
+  // 학사일정도 검색
+  for(const [dk, items] of Object.entries(schedules)) {
+    for(const sc of items) {
+      if(sc.text.toLowerCase().includes(lower)) {
+        results.push({ dk, staffName: '학사일정', staffColor: '#0d9488', text: sc.text, status: 'sch' });
+      }
+    }
+  }
+
+  results.sort((a,b) => b.dk.localeCompare(a.dk));
+
+  const el = document.getElementById('search-results');
+  el.classList.add('on');
+
+  if(results.length === 0) {
+    el.innerHTML = `<div class="sr-empty">검색 결과가 없습니다</div>`;
+    return;
+  }
+
+  function highlight(text) {
+    return escHtml(text).replace(new RegExp(escHtml(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m=>`<mark>${m}</mark>`);
+  }
+
+  el.innerHTML = results.slice(0,80).map(r => {
+    const statusHtml = r.status==='done'
+      ? `<span class="sr-status done">완료</span>`
+      : r.status==='ing'
+      ? `<span class="sr-status ing">진행</span>`
+      : '';
+    const [y,m,d] = r.dk.split('-');
+    const dateStr = `${parseInt(m)}/${parseInt(d)}`;
+    const whoStyle = `background:${r.staffColor}22;color:${r.staffColor}`;
+    return `<div class="sr-item" onclick="goToDate('${r.dk}')">
+      <span class="sr-date">${y}.${dateStr}</span>
+      <span class="sr-who" style="${whoStyle}">${escHtml(r.staffName)}</span>
+      <span class="sr-text">${highlight(r.text)}</span>
+      ${statusHtml}
+    </div>`;
+  }).join('') + (results.length>80?`<div class="sr-empty" style="font-size:11px">${results.length}건 중 80건 표시</div>`:'');
+}
+
+function goToDate(dk) {
+  const d = new Date(dk);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.round((d - today) / (7*24*60*60*1000));
+  weekOffset = diff < 0 ? Math.floor(diff) : Math.ceil(diff);
+  // 해당 주로 정확히 이동
+  const dates = getWeekDates(weekOffset);
+  const found = dates.some(dd => dateKey(dd) === dk);
+  if(!found) {
+    // 주 오프셋 재계산
+    const mon = new Date(d);
+    const dow = d.getDay();
+    mon.setDate(d.getDate() - (dow===0?6:dow-1));
+    const todayMon = new Date(today);
+    const todayDow = today.getDay();
+    todayMon.setDate(today.getDate() - (todayDow===0?6:todayDow-1));
+    weekOffset = Math.round((mon - todayMon) / (7*24*60*60*1000));
+  }
+  render();
+  closeSearchResults();
+  clearSearch();
+}
+
+function closeSearchResults() {
+  document.getElementById('search-results').classList.remove('on');
+}
+
+function jumpToDate() {
+  const val = document.getElementById('date-jump-input').value;
+  if(!val) { toast('날짜를 선택하세요','err'); return; }
+  goToDate(val);
+}
+
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-clear').classList.remove('on');
+  closeSearchResults();
+}
+
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -1249,7 +1514,14 @@ document.addEventListener('keydown', e => {
   if(e.key === 'Escape') {
     closeStaffModal();
     closeTextModal();
+    closeSearchResults();
   }
+});
+
+// 검색창 외부 클릭 시 닫기
+document.addEventListener('click', e => {
+  const bar = document.getElementById('search-bar');
+  if(bar && !bar.contains(e.target)) closeSearchResults();
 });
 
 /* ══════════════════════════════
