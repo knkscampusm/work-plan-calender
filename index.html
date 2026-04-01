@@ -391,6 +391,7 @@ input, textarea { font-family: inherit; }
   margin-top: 1px;
 }
 .add-sch-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-dim); }
+/* edit → modal 방식으로 변경 */
 .day-cell.today-col { background: var(--teal-dim2); }
 .day-cell.past { opacity: .55; }
 .day-cell:hover { background: rgba(255,255,255,.02); }
@@ -905,6 +906,25 @@ input, textarea { font-family: inherit; }
     <div class="text-modal-body" id="text-modal-body"></div>
   </div>
 </div>
+<div class="overlay" id="edit-modal" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal" style="width:400px">
+    <div class="modal-hd">
+      ✏️ 할일 수정
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <textarea id="edit-modal-input" class="modal-input"
+        style="resize:vertical;min-height:80px;padding:9px 12px;font-size:13px;line-height:1.6"
+        maxlength="200" placeholder="할일 내용 입력"></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="closeEditModal()"
+          style="padding:7px 16px;border:1.5px solid var(--sl200);border-radius:8px;background:var(--white);color:var(--sl500);font-size:13px;font-weight:700;cursor:pointer">취소</button>
+        <button onclick="confirmEditTodo()"
+          style="padding:7px 16px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-size:13px;font-weight:700;cursor:pointer">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script>
@@ -937,6 +957,7 @@ let todos = {};      // { "staffId_YYYY-MM-DD": [{id, text, done}] }
 let schedules = {}; // { "YYYY-MM-DD": [{id, text}] }
 let selectedColor = COLORS[0];
 let listeners = [];
+let _editCtx = null; // {staffId, dk, id}
 let hiddenStaff = new Set(JSON.parse(localStorage.getItem('quetta_hidden')||'[]'));
 
 /* ══════════════════════════════
@@ -1048,8 +1069,8 @@ function render() {
         const isLong = t.text.length > 50;
         const short = isLong ? escHtml(t.text.slice(0,50)) + '<span class="ellipsis">…</span>' : full;
         const textHtml = isLong
-          ? `<span class="todo-text expandable" onclick="openTextModal(this.dataset.full)" data-full="${t.text}">${short}</span>`
-          : `<span class="todo-text">${full}</span>`;
+          ? `<span class="todo-text expandable" title="클릭: 전문보기 / 더블클릭: 수정" onclick="openTextModal(this.dataset.full)" ondblclick="event.stopPropagation();startEditTodo('${s.id}','${dk}','${t.id}',this.closest('.todo-item'))" data-full="${t.text}">${short}</span>`
+          : `<span class="todo-text" title="더블클릭: 수정" ondblclick="startEditTodo('${s.id}','${dk}','${t.id}',this.closest('.todo-item'))">${full}</span>`;
         return `<div class="todo-item ${itemCls}" id="ti-${t.id}">
           <button class="status-btn ${btnCls}" onclick="cycleStatus('${s.id}','${dk}','${t.id}')">${btnLbl}</button>
           ${textHtml}
@@ -1153,6 +1174,74 @@ async function deleteTodo(staffId, dk, id) {
     try {
       await db.ref(`${todoPath(staffId, dk)}/${id}`).remove();
     } catch(e) {}
+  }
+}
+
+function startEditTodo(staffId, dk, id, itemEl) {
+  const textEl = itemEl.querySelector('.todo-text');
+  const currentText = textEl.dataset.full || textEl.textContent.replace('…','').trim();
+  _editCtx = { staffId, dk, id };
+  const inp = document.getElementById('edit-modal-input');
+  inp.value = currentText;
+  document.getElementById('edit-modal').classList.add('on');
+  setTimeout(() => { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }, 50);
+}
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('on');
+  _editCtx = null;
+}
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    if(document.getElementById('edit-modal').classList.contains('on')) confirmEditTodo();
+  }
+});
+
+async function confirmEditTodo() {
+  if(!_editCtx) return;
+  const newText = document.getElementById('edit-modal-input').value.trim();
+  if(!newText) { toast('내용을 입력하세요','err'); return; }
+  const {staffId, dk, id} = _editCtx;
+  closeEditModal();
+  await updateTodo(staffId, dk, id, newText);
+  toast('수정 완료','ok');
+}
+
+async function updateTodo(staffId, dk, id, newText) {
+  const key = `${staffId}_${dk}`;
+  const item = (todos[key]||[]).find(t => t.id === id);
+  if(!item) return;
+  item.text = newText;
+
+  // render() 대신 해당 DOM 요소만 직접 업데이트
+  const itemEl = document.getElementById(`ti-${id}`);
+  if(itemEl) {
+    const wrap = itemEl.querySelector('.edit-input-wrap');
+    if(wrap) wrap.remove();
+    let textEl = itemEl.querySelector('.todo-text');
+    if(textEl) {
+      textEl.style.display = '';
+      const isLong = newText.length > 50;
+      if(isLong) {
+        const short = escHtml(newText.slice(0,50)) + '<span class="ellipsis">…</span>';
+        textEl.className = 'todo-text expandable';
+        textEl.title = '클릭: 전문보기 / 더블클릭: 수정';
+        textEl.dataset.full = newText;
+        textEl.innerHTML = short;
+        textEl.onclick = () => openTextModal(textEl.dataset.full);
+        textEl.ondblclick = (e) => { e.stopPropagation(); startEditTodo(staffId, dk, id, itemEl); };
+      } else {
+        textEl.className = 'todo-text';
+        textEl.title = '더블클릭: 수정';
+        textEl.dataset.full = '';
+        textEl.innerHTML = escHtml(newText);
+        textEl.onclick = null;
+        textEl.ondblclick = (e) => { e.stopPropagation(); startEditTodo(staffId, dk, id, itemEl); };
+      }
+    }
+  }
+
+  if(db) {
+    try { await db.ref(`${todoPath(staffId, dk)}/${id}/text`).set(newText); } catch(e) {}
   }
 }
 
@@ -1535,6 +1624,7 @@ document.addEventListener('keydown', e => {
     closeStaffModal();
     closeTextModal();
     closeSearchResults();
+    closeEditModal();
   }
 });
 
