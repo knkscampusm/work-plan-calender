@@ -1439,7 +1439,16 @@ function selectColor(c) {
    주간 이동
 ══════════════════════════════ */
 function moveWeek(dir) { weekOffset += dir; render(); }
-function goToday() { weekOffset = 0; render(); }
+function scrollToToday() {
+  const todayRow = document.querySelector('.day-row.today-row');
+  if(todayRow) {
+    setTimeout(() => {
+      todayRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+}
+
+function goToday() { weekOffset = 0; render(); scrollToToday(); }
 
 /* ══════════════════════════════
    Firebase 리스닝
@@ -1658,8 +1667,11 @@ window.onload = () => {
   const ok = initFirebase();
   if(ok) {
     startListening();
+    // Firebase 데이터 로드 후 스크롤 (약간 딜레이)
+    setTimeout(scrollToToday, 800);
   } else {
     render();
+    setTimeout(scrollToToday, 200);
   }
 };
 </script>
