@@ -1266,17 +1266,21 @@ async function updateTodo(staffId, dk, id, newText) {
    드래그 앤 드롭
 ══════════════════════════════ */
 let _drag = null; // { staffId, dk, id }
+let _dragId = null; // 별도 보관 (dragend에서 정리용)
 
 function onTodoDragStart(e, staffId, dk, id) {
   _drag = { staffId, dk, id };
+  _dragId = id;
   e.dataTransfer.effectAllowed = 'move';
   setTimeout(() => { const el = document.getElementById(`ti-${id}`); if(el) el.classList.add('dragging'); }, 0);
 }
 
 function onTodoDragEnd(e) {
-  if(_drag) {
-    const el = document.getElementById(`ti-${_drag.id}`);
+  // _drag와 무관하게 _dragId로 항상 클래스 정리
+  if(_dragId) {
+    const el = document.getElementById(`ti-${_dragId}`);
     if(el) el.classList.remove('dragging');
+    _dragId = null;
   }
   document.querySelectorAll('.day-cell.drag-over').forEach(c => c.classList.remove('drag-over'));
   _drag = null;
@@ -1299,7 +1303,7 @@ async function onCellDrop(e, toStaffId, toDk) {
   if(!_drag) return;
 
   const { staffId: fromStaffId, dk: fromDk, id } = _drag;
-  _drag = null;
+  // _drag는 onTodoDragEnd에서 정리 — 여기서 null 안 함
 
   // 같은 셀이면 무시
   if(fromStaffId === toStaffId && fromDk === toDk) return;
