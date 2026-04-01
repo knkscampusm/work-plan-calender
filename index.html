@@ -205,7 +205,7 @@ input, textarea { font-family: inherit; }
 .day-row.sun-row .day-label-dn { color: #ef4444; }
 .day-row.sat-row .day-label-dd,
 .day-row.sat-row .day-label-dn { color: #3b82f6; }
-.day-row.past-row { opacity: .55; }
+.day-row.past-row { }
 
 .day-cell {
   padding: 6px 8px;
@@ -267,8 +267,7 @@ input, textarea { font-family: inherit; }
 /* 완료 */
 .todo-item.status-done {
   text-decoration: line-through;
-  color: var(--text3);
-  border-color: rgba(45,212,191,.2);
+  border-color: rgba(13,148,136,.2);
 }
 
 /* 상태 뱃지 (클릭으로 순환) */
@@ -508,6 +507,24 @@ input, textarea { font-family: inherit; }
 }
 .staff-hide-btn:hover { background: var(--amber-dim); color: var(--amber); border-color: var(--amber); }
 .staff-hide-btn.hidden-on { background: var(--teal-dim); color: var(--teal); border-color: var(--teal); }
+.staff-order-btns { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+.staff-order-btn {
+  width: 20px;
+  height: 16px;
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  border-radius: 3px;
+  color: var(--text3);
+  font-size: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .1s;
+  padding: 0;
+}
+.staff-order-btn:hover { background: var(--teal-dim); color: var(--teal); border-color: var(--teal); }
+.staff-order-btn:disabled { opacity: .25; cursor: not-allowed; }
 
 /* 색상 선택 */
 .color-picker { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -521,6 +538,63 @@ input, textarea { font-family: inherit; }
 }
 .color-opt:hover { transform: scale(1.15); }
 .color-opt.sel { border-color: #fff; }
+
+/* 전문 모달 */
+.text-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 600;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(3px);
+}
+.text-modal-overlay.on { display: flex; }
+.text-modal {
+  background: var(--white);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  width: 380px;
+  max-width: 92vw;
+  box-shadow: 0 8px 40px rgba(0,0,0,.12);
+  overflow: hidden;
+}
+.text-modal-hd {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border2);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.text-modal-close {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: var(--bg3);
+  border-radius: 5px;
+  color: var(--text2);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.text-modal-close:hover { background: var(--red-dim); color: var(--red); }
+.text-modal-body {
+  padding: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 60vh;
+  overflow-y: auto;
+}
 
 /* TOAST */
 #toast {
@@ -633,6 +707,15 @@ input, textarea { font-family: inherit; }
   </div>
 </div>
 
+<div class="text-modal-overlay" id="text-modal" onclick="if(event.target===this)closeTextModal()">
+  <div class="text-modal">
+    <div class="text-modal-hd">
+      <span>📝 할일 전문</span>
+      <button class="text-modal-close" onclick="closeTextModal()">✕</button>
+    </div>
+    <div class="text-modal-body" id="text-modal-body"></div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script>
@@ -777,7 +860,7 @@ function render() {
         const isLong = t.text.length > 50;
         const short = isLong ? escHtml(t.text.slice(0,50)) + '<span class="ellipsis">…</span>' : full;
         const textHtml = isLong
-          ? `<span class="todo-text expandable" onclick="toggleExpand(this)" data-full="${full}" data-short="${short}">${short}</span>`
+          ? `<span class="todo-text expandable" onclick="openTextModal(this.dataset.full)" data-full="${t.text}">${short}</span>`
           : `<span class="todo-text">${full}</span>`;
         return `<div class="todo-item ${itemCls}" id="ti-${t.id}">
           <button class="status-btn ${btnCls}" onclick="cycleStatus('${s.id}','${dk}','${t.id}')">${btnLbl}</button>
@@ -955,6 +1038,17 @@ async function deleteSchedule(dk, id) {
 function saveStaffLocal() {
   try { localStorage.setItem('quetta_staff', JSON.stringify(staff)); } catch(e) {}
 }
+function moveStaff(id, dir) {
+  const i = staff.findIndex(s => s.id === id);
+  if(i < 0) return;
+  const j = i + dir;
+  if(j < 0 || j >= staff.length) return;
+  [staff[i], staff[j]] = [staff[j], staff[i]];
+  saveStaffLocal();
+  if(db) db.ref('staff').set(Object.fromEntries(staff.map(s => [s.id, s]))).catch(()=>{});
+  renderStaffModal();
+  render();
+}
 function saveHiddenLocal() {
   try { localStorage.setItem('quetta_hidden', JSON.stringify([...hiddenStaff])); } catch(e) {}
 }
@@ -1052,9 +1146,13 @@ function renderStaffModal() {
     sl.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px 0">아직 직원이 없습니다</div>';
     return;
   }
-  sl.innerHTML = staff.map(s => {
+  sl.innerHTML = staff.map((s, i) => {
     const isHidden = hiddenStaff.has(s.id);
     return `<div class="staff-list-item ${isHidden?'staff-hidden':''}">
+      <div class="staff-order-btns">
+        <button class="staff-order-btn" onclick="moveStaff('${s.id}',-1)" ${i===0?'disabled':''}>▲</button>
+        <button class="staff-order-btn" onclick="moveStaff('${s.id}',1)" ${i===staff.length-1?'disabled':''}>▼</button>
+      </div>
       <div class="staff-list-dot" style="background:${isHidden?'#cbd5e1':s.color}"></div>
       <span class="staff-list-name" style="${isHidden?'color:var(--text3);text-decoration:line-through':''}">${escHtml(s.name)}</span>
       <button class="staff-hide-btn ${isHidden?'hidden-on':''}" onclick="toggleHideStaff('${s.id}')" title="${isHidden?'표시':'숨김'}">${isHidden?'👁 표시':'🙈 숨김'}</button>
@@ -1085,7 +1183,15 @@ function startListening() {
   // 직원 목록
   db.ref('staff').on('value', snap => {
     const val = snap.val() || {};
-    staff = Object.values(val);
+    const fbStaff = Object.values(val);
+    // localStorage 순서 우선 적용
+    const saved = JSON.parse(localStorage.getItem('quetta_staff')||'[]');
+    const savedIds = saved.map(s=>s.id);
+    const ordered = [
+      ...saved.filter(s => fbStaff.find(f=>f.id===s.id)).map(s => fbStaff.find(f=>f.id===s.id)||s),
+      ...fbStaff.filter(f => !savedIds.includes(f.id))
+    ];
+    staff = ordered;
     saveStaffLocal();
     render();
     renderStaffModal();
@@ -1123,10 +1229,12 @@ function escHtml(s) {
 }
 
 let _tt;
-function toggleExpand(el) {
-  const isFull = el.dataset.expanded === '1';
-  el.innerHTML = isFull ? el.dataset.short : el.dataset.full;
-  el.dataset.expanded = isFull ? '0' : '1';
+function openTextModal(text) {
+  document.getElementById('text-modal-body').textContent = text;
+  document.getElementById('text-modal').classList.add('on');
+}
+function closeTextModal() {
+  document.getElementById('text-modal').classList.remove('on');
 }
 
 function toast(msg, type='') {
@@ -1138,14 +1246,32 @@ function toast(msg, type='') {
 }
 
 document.addEventListener('keydown', e => {
-  if(e.key === 'Escape') closeStaffModal();
+  if(e.key === 'Escape') {
+    closeStaffModal();
+    closeTextModal();
+  }
 });
 
 /* ══════════════════════════════
    INIT
 ══════════════════════════════ */
+// 기본 직원 순서 (localStorage에 없을 때 적용)
+const DEFAULT_ORDER = ['김리아', '이동현', '강보름', '김수빈', '조병일'];
+
 window.onload = () => {
   loadStaffLocal();
+  // localStorage에 순서 없으면 기본 순서 적용
+  if(staff.length > 1) {
+    const hasOrder = localStorage.getItem('quetta_staff');
+    if(!hasOrder) {
+      staff.sort((a,b) => {
+        const ai = DEFAULT_ORDER.findIndex(n => a.name.includes(n));
+        const bi = DEFAULT_ORDER.findIndex(n => b.name.includes(n));
+        return (ai<0?99:ai) - (bi<0?99:bi);
+      });
+      saveStaffLocal();
+    }
+  }
   render();
   const ok = initFirebase();
   if(ok) {
