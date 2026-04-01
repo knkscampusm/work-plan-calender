@@ -45,15 +45,20 @@ input, textarea { font-family: inherit; }
   top: 0;
   z-index: 100;
   background: var(--bg);
-  border-bottom: 1px solid var(--border);
-  padding: 0 18px;
-  height: 54px;
-  display: flex;
+  border-bottom: 1px solid var(--border2);
+  padding: 0 14px;
+  height: 50px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   backdrop-filter: blur(10px);
   box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
+#search-bar { display: none; }
+.hdr-left { display: flex; align-items: center; gap: 8px; justify-content: flex-start; }
+.hdr-center { display: flex; align-items: center; gap: 6px; justify-content: center; }
+.hdr-right { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
 .logo {
   display: flex;
   align-items: center;
@@ -75,11 +80,7 @@ input, textarea { font-family: inherit; }
 }
 .hdr-spacer { flex: 1; }
 
-.week-nav {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+/* week-nav → hdr-center로 통합 */
 .btn-nav {
   width: 30px;
   height: 30px;
@@ -95,10 +96,10 @@ input, textarea { font-family: inherit; }
 }
 .btn-nav:hover { background: var(--teal-dim); color: var(--teal); border-color: var(--teal); }
 #week-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text2);
-  min-width: 120px;
+  min-width: 128px;
   text-align: center;
   font-family: 'DM Mono', monospace;
 }
@@ -127,43 +128,37 @@ input, textarea { font-family: inherit; }
 }
 .btn-staff:hover { background: var(--amber-dim); color: var(--amber); border-color: var(--amber); }
 
-/* ── 검색바 ── */
-#search-bar {
-  background: var(--white);
-  border-bottom: 1px solid var(--border2);
-  padding: 8px 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+/* ── 검색바 (헤더 내 인라인) ── */
+#search-bar { display: none; }
 .search-input-wrap {
   display: flex;
   align-items: center;
-  flex: 1;
-  max-width: 440px;
   background: var(--bg3);
   border: 1.5px solid var(--border2);
-  border-radius: 8px;
-  padding: 0 10px;
-  gap: 6px;
+  border-radius: 7px;
+  padding: 0 8px;
+  gap: 5px;
   transition: border-color .12s;
+  height: 30px;
+  width: 180px;
 }
 .search-input-wrap:focus-within { border-color: var(--teal); background: var(--white); }
-.search-icon { color: var(--text3); font-size: 13px; flex-shrink: 0; }
+.search-icon { color: var(--text3); font-size: 12px; flex-shrink: 0; }
 .search-input {
   flex: 1;
   border: none;
   background: transparent;
-  padding: 8px 0;
-  font-size: 13px;
+  padding: 0;
+  font-size: 12px;
   color: var(--ink);
   outline: none;
+  min-width: 0;
 }
 .search-input::placeholder { color: var(--text3); }
 .search-clear {
-  width: 18px; height: 18px;
+  width: 16px; height: 16px;
   border: none; background: var(--sl300);
-  border-radius: 50%; color: #fff; font-size: 10px;
+  border-radius: 50%; color: #fff; font-size: 9px;
   cursor: pointer; display: none; align-items: center; justify-content: center;
   flex-shrink: 0; font-weight: 900;
 }
@@ -173,9 +168,9 @@ input, textarea { font-family: inherit; }
 /* 검색 결과 드롭다운 */
 #search-results {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   left: 0;
-  right: 0;
+  min-width: 380px;
   background: var(--white);
   border: 1px solid var(--border2);
   border-top: none;
@@ -236,33 +231,35 @@ input, textarea { font-family: inherit; }
 .sr-status.done { background: var(--teal-dim); color: var(--teal); }
 .sr-status.ing  { background: var(--amber-dim); color: var(--amber); }
 .sr-empty { padding: 20px; text-align: center; color: var(--text3); font-size: 13px; }
-.search-wrap { position: relative; flex: 1; max-width: 440px; }
+.search-wrap { position: relative; }
 .date-jump-wrap {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   flex-shrink: 0;
 }
 .date-jump-input {
-  padding: 7px 10px;
+  padding: 5px 8px;
   border: 1.5px solid var(--border2);
-  border-radius: 8px;
-  font-size: 13px;
+  border-radius: 7px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ink);
   background: var(--white);
   outline: none;
   transition: border-color .12s;
   cursor: pointer;
+  height: 30px;
 }
 .date-jump-input:focus { border-color: var(--teal); }
 .date-jump-btn {
-  padding: 7px 14px;
+  padding: 0 11px;
+  height: 30px;
   background: var(--teal);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 12px;
+  border-radius: 7px;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: background .12s;
@@ -275,13 +272,15 @@ input, textarea { font-family: inherit; }
   display: grid;
   border-bottom: 1px solid var(--border);
   position: sticky;
-  top: 54px;
+  top: 50px;
   z-index: 90;
   background: var(--bg);
 }
 .wh-spacer {
-  padding: 10px 14px;
+  padding: 10px 6px;
   border-right: 1px solid var(--border);
+  min-width: 80px;
+  width: 80px;
 }
 .wh-staff {
   padding: 10px 8px;
@@ -322,10 +321,11 @@ input, textarea { font-family: inherit; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 10px 6px;
+  justify-content: flex-start;
+  padding: 8px 5px 6px;
   border-right: 1px solid var(--border);
-  gap: 2px;
+  gap: 3px;
+  min-height: 80px;
 }
 .day-label-dn {
   font-size: 10px;
@@ -361,25 +361,36 @@ input, textarea { font-family: inherit; }
   transition: background .12s;
 }
 .day-cell:last-child { border-right: none; }
-.sch-cell {
-  background: rgba(13,148,136,.03);
-  border-right: 2px solid rgba(13,148,136,.2) !important;
-}
+.sch-cell { display: none; }
+.day-sch-list { display: flex; flex-direction: column; gap: 2px; width: 100%; }
 .sch-item {
   display: flex;
   align-items: flex-start;
-  gap: 4px;
-  padding: 3px 6px;
-  background: rgba(13,148,136,.08);
+  gap: 3px;
+  padding: 2px 5px;
+  background: rgba(13,148,136,.09);
   border: 1px solid rgba(13,148,136,.2);
-  border-radius: 5px;
-  font-size: 11px;
+  border-radius: 4px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--teal);
   line-height: 1.4;
+  width: 100%;
 }
-.sch-item:hover { background: rgba(13,148,136,.14); }
+.sch-item:hover { background: rgba(13,148,136,.16); }
 .sch-text { flex: 1; word-break: break-all; min-width: 0; }
+.add-sch-btn {
+  width: 18px; height: 18px;
+  border: 1px dashed rgba(13,148,136,.35);
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(13,148,136,.5);
+  font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .12s; flex-shrink: 0;
+  margin-top: 1px;
+}
+.add-sch-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-dim); }
 .day-cell.today-col { background: var(--teal-dim2); }
 .day-cell.past { opacity: .55; }
 .day-cell:hover { background: rgba(255,255,255,.02); }
@@ -778,49 +789,69 @@ input, textarea { font-family: inherit; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
 
+@media (max-width: 1100px) {
+  .date-jump-input { width: 130px; }
+  .search-input-wrap { width: 150px; }
+}
+@media (max-width: 900px) {
+  #hdr { padding: 0 8px; gap: 5px; }
+  .logo-title { display: none; }
+  #week-label { min-width: 110px; font-size: 10px; }
+  .date-jump-input { width: 120px; font-size: 11px; }
+  .search-input-wrap { width: 120px; }
+  .btn-today { padding: 4px 8px; font-size: 10px; }
+  .btn-staff { padding: 4px 8px; font-size: 10px; }
+  .date-jump-btn { padding: 0 8px; font-size: 10px; }
+}
 @media (max-width: 700px) {
-  #week-hdr, .staff-row { grid-template-columns: 64px repeat(7, 1fr); }
-  .staff-label { padding: 8px 6px; }
-  .staff-name { font-size: 11px; }
-  .wh-dd { font-size: 14px; }
-  .day-cell { padding: 4px 4px; }
-  .todo-item { font-size: 11px; padding: 3px 5px; }
+  #hdr {
+    grid-template-columns: 1fr;
+    height: auto;
+    padding: 6px 10px;
+    gap: 5px;
+  }
+  .hdr-left { justify-content: flex-start; }
+  .hdr-center { justify-content: center; }
+  .hdr-right { justify-content: flex-start; flex-wrap: wrap; }
+  .logo-title { display: flex; }
+  .day-cell { padding: 3px 3px; }
+  .todo-item { font-size: 11px; padding: 3px 4px; }
+  .wh-dd { font-size: 13px; }
+  .wh-staff-name { font-size: 10px; }
+  .day-label-dd { font-size: 15px; }
 }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
+<!-- HEADER (단일 행 3분할) -->
 <div id="hdr">
-  <div class="logo">
+  <div class="hdr-left">
     <span class="logo-q">의대관</span>
     <span class="logo-title">주간 할일</span>
   </div>
-  <div class="hdr-spacer"></div>
-  <div class="week-nav">
+  <div class="hdr-center">
     <button class="btn-nav" onclick="moveWeek(-1)">‹</button>
     <span id="week-label">로딩 중...</span>
     <button class="btn-nav" onclick="moveWeek(1)">›</button>
+    <button class="btn-today" onclick="goToday()">오늘</button>
   </div>
-  <button class="btn-today" onclick="goToday()">오늘</button>
-  <button class="btn-staff" onclick="openStaffModal()">👥 직원 관리</button>
-</div>
-
-<!-- 검색바 -->
-<div id="search-bar">
-  <div class="search-wrap">
-    <div class="search-input-wrap">
-      <span class="search-icon">🔍</span>
-      <input class="search-input" id="search-input" placeholder="할일 검색..." autocomplete="off"
-        oninput="onSearchInput(this.value)" onkeydown="if(event.key==='Escape')clearSearch()">
-      <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+  <div class="hdr-right">
+    <div class="search-wrap">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="search-input" placeholder="할일 검색..." autocomplete="off"
+          oninput="onSearchInput(this.value)" onkeydown="if(event.key==='Escape')clearSearch()">
+        <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+      </div>
+      <div id="search-results"></div>
     </div>
-    <div id="search-results"></div>
-  </div>
-  <div class="date-jump-wrap">
-    <input type="date" id="date-jump-input" class="date-jump-input"
-      onkeydown="if(event.key==='Enter')jumpToDate()">
-    <button class="date-jump-btn" onclick="jumpToDate()">이동</button>
+    <div class="date-jump-wrap">
+      <input type="date" id="date-jump-input" class="date-jump-input"
+        onkeydown="if(event.key==='Enter')jumpToDate()">
+      <button class="date-jump-btn" onclick="jumpToDate()">이동</button>
+    </div>
+    <button class="btn-staff" onclick="openStaffModal()">👥</button>
   </div>
 </div>
 
@@ -844,7 +875,7 @@ input, textarea { font-family: inherit; }
 <div class="overlay" id="staff-modal" onclick="if(event.target===this)closeStaffModal()">
   <div class="modal">
     <div class="modal-hd">
-      👥 직원 관리
+      👥
       <button class="modal-close" onclick="closeStaffModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -856,10 +887,7 @@ input, textarea { font-family: inherit; }
           <button class="btn-add-staff" onclick="addStaff()">추가</button>
         </div>
       </div>
-      <div>
-        <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;letter-spacing:.05em">색상</div>
-        <div class="color-picker" id="color-picker"></div>
-      </div>
+      <div id="color-picker" style="display:none"></div>
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;letter-spacing:.05em">현재 직원</div>
         <div class="staff-list" id="staff-list-modal"></div>
@@ -962,6 +990,9 @@ const DAY_EN = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
    렌더
 ══════════════════════════════ */
 function render() {
+  // week-hdr top을 헤더 실제 높이에 맞춤
+  const hdrH = document.getElementById('hdr').offsetHeight;
+  document.getElementById('week-hdr').style.top = hdrH + 'px';
   const dates = getWeekDates(weekOffset);
   const todayObj = new Date(); todayObj.setHours(0,0,0,0);
 
@@ -983,18 +1014,14 @@ function render() {
 
   // 그리드 컬럼 = 날짜라벨 + 직원수
   const visibleStaff = staff.filter(s => !hiddenStaff.has(s.id));
-  const colTpl = `52px 140px repeat(${visibleStaff.length}, 1fr)`;
+  const colTpl = `80px repeat(${visibleStaff.length}, 1fr)`;
   document.getElementById('week-hdr').style.gridTemplateColumns = colTpl;
 
   // 주간 헤더: 직원 이름 가로
   const whdr = document.getElementById('week-hdr');
-  whdr.innerHTML = `<div class="wh-spacer"></div>
-    <div class="wh-staff wh-schedule-hd">
-      <span style="font-size:11px;font-weight:800;color:var(--teal)">📅 학사일정</span>
-    </div>` +
+  whdr.innerHTML = `<div class="wh-spacer"></div>` +
     visibleStaff.map(s => `
       <div class="wh-staff">
-        <div class="wh-staff-dot" style="background:${s.color}"></div>
         <span class="wh-staff-name">${escHtml(s.name)}</span>
       </div>
     `).join('');
@@ -1047,10 +1074,8 @@ function render() {
       <div class="day-label">
         <div class="day-label-dn">${DAY_KO[dow]}요일</div>
         <div class="day-label-dd">${d.getDate()}</div>
-      </div>
-      <div class="day-cell sch-cell">
-        ${schHtml}
-        <button class="add-btn" onclick="startAddSchedule('${dk}',this)" title="학사일정 추가">+</button>
+        ${schHtml ? `<div class="day-sch-list">${schHtml}</div>` : ''}
+        <button class="add-sch-btn" onclick="startAddSchedule('${dk}',this)" title="학사일정 추가">+</button>
       </div>
       ${cells}
     </div>`;
@@ -1293,14 +1318,6 @@ function closeStaffModal() {
 }
 
 function renderStaffModal() {
-  // 색상 선택
-  const cp = document.getElementById('color-picker');
-  cp.innerHTML = COLORS.map(c => `
-    <div class="color-opt ${c === selectedColor ? 'sel' : ''}"
-      style="background:${c}"
-      onclick="selectColor('${c}')"></div>
-  `).join('');
-
   // 직원 목록
   const sl = document.getElementById('staff-list-modal');
   if(staff.length === 0) {
@@ -1314,9 +1331,9 @@ function renderStaffModal() {
         <button class="staff-order-btn" onclick="moveStaff('${s.id}',-1)" ${i===0?'disabled':''}>▲</button>
         <button class="staff-order-btn" onclick="moveStaff('${s.id}',1)" ${i===staff.length-1?'disabled':''}>▼</button>
       </div>
-      <div class="staff-list-dot" style="background:${isHidden?'#cbd5e1':s.color}"></div>
+
       <span class="staff-list-name" style="${isHidden?'color:var(--text3);text-decoration:line-through':''}">${escHtml(s.name)}</span>
-      <button class="staff-hide-btn ${isHidden?'hidden-on':''}" onclick="toggleHideStaff('${s.id}')" title="${isHidden?'표시':'숨김'}">${isHidden?'👁 표시':'🙈 숨김'}</button>
+      <button class="staff-hide-btn ${isHidden?'hidden-on':''}" onclick="toggleHideStaff('${s.id}')" title="${isHidden?'표시':'숨김'}">${isHidden?'표시':'숨김'}</button>
       <button class="staff-list-del" onclick="confirmDelStaff('${s.id}')">✕</button>
     </div>`;
   }).join('');
@@ -1400,20 +1417,19 @@ function doSearch(q) {
   const lower = q.toLowerCase();
   const results = [];
 
-  for(const s of staff) {
-    for(const [dk, items] of Object.entries(todos[s.id] || {})) {
-      for(const t of items) {
-        if(t.text.toLowerCase().includes(lower)) {
-          results.push({ dk, staffName: s.name, staffColor: s.color, text: t.text, status: t.status||'none' });
-        }
-      }
-    }
-  }
-  // 학사일정도 검색
-  for(const [dk, items] of Object.entries(schedules)) {
-    for(const sc of items) {
-      if(sc.text.toLowerCase().includes(lower)) {
-        results.push({ dk, staffName: '학사일정', staffColor: '#0d9488', text: sc.text, status: 'sch' });
+  // todos 키는 "staffId_YYYY-MM-DD" 형태
+  for(const [key, items] of Object.entries(todos)) {
+    const underIdx = key.lastIndexOf('_');
+    if(underIdx < 0) continue;
+    const staffId = key.slice(0, underIdx);
+    const dk = key.slice(underIdx + 1);
+    // YYYY-MM-DD 형태 검증
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(dk)) continue;
+    const s = staff.find(s => s.id === staffId);
+    if(!s) continue;
+    for(const t of (items || [])) {
+      if(t.text && t.text.toLowerCase().includes(lower)) {
+        results.push({ dk, staffName: s.name, text: t.text, status: t.status||'none' });
       }
     }
   }
@@ -1439,11 +1455,10 @@ function doSearch(q) {
       ? `<span class="sr-status ing">진행</span>`
       : '';
     const [y,m,d] = r.dk.split('-');
-    const dateStr = `${parseInt(m)}/${parseInt(d)}`;
-    const whoStyle = `background:${r.staffColor}22;color:${r.staffColor}`;
+    const dateStr = `${y}.${m}.${d}`;
     return `<div class="sr-item" onclick="goToDate('${r.dk}')">
-      <span class="sr-date">${y}.${dateStr}</span>
-      <span class="sr-who" style="${whoStyle}">${escHtml(r.staffName)}</span>
+      <span class="sr-date">${y}.${m}.${d}</span>
+      <span class="sr-who">${escHtml(r.staffName)}</span>
       <span class="sr-text">${highlight(r.text)}</span>
       ${statusHtml}
     </div>`;
@@ -1509,6 +1524,11 @@ function toast(msg, type='') {
   clearTimeout(_tt);
   _tt = setTimeout(() => el.classList.remove('on'), 2500);
 }
+
+window.addEventListener('resize', () => {
+  const hdrH = document.getElementById('hdr').offsetHeight;
+  document.getElementById('week-hdr').style.top = hdrH + 'px';
+});
 
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape') {
