@@ -266,7 +266,6 @@ input, textarea { font-family: inherit; }
 }
 /* 완료 */
 .todo-item.status-done {
-  opacity: .4;
   text-decoration: line-through;
   color: var(--text3);
   border-color: rgba(45,212,191,.2);
@@ -306,7 +305,9 @@ input, textarea { font-family: inherit; }
   color: var(--teal);
   border: 1px solid rgba(45,212,191,.4);
 }
-.todo-text { flex: 1; min-width: 0; word-break: break-all; }
+.todo-text { flex: 1; min-width: 0; word-break: break-all; cursor: default; }
+.todo-text.expandable { cursor: pointer; }
+.todo-text.expandable:hover { color: var(--teal); }
 .todo-del {
   width: 14px;
   height: 14px;
@@ -493,6 +494,20 @@ input, textarea { font-family: inherit; }
   justify-content: center;
 }
 .staff-list-del:hover { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+.staff-hide-btn {
+  padding: 3px 8px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  border-radius: 6px;
+  color: var(--text3);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.staff-hide-btn:hover { background: var(--amber-dim); color: var(--amber); border-color: var(--amber); }
+.staff-hide-btn.hidden-on { background: var(--teal-dim); color: var(--teal); border-color: var(--teal); }
 
 /* 색상 선택 */
 .color-picker { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -650,6 +665,7 @@ let todos = {};      // { "staffId_YYYY-MM-DD": [{id, text, done}] }
 let schedules = {}; // { "YYYY-MM-DD": [{id, text}] }
 let selectedColor = COLORS[0];
 let listeners = [];
+let hiddenStaff = new Set(JSON.parse(localStorage.getItem('quetta_hidden')||'[]'));
 
 /* ══════════════════════════════
    Firebase 초기화
@@ -722,7 +738,8 @@ function render() {
   empty.style.display = 'none';
 
   // 그리드 컬럼 = 날짜라벨 + 직원수
-  const colTpl = `52px 140px repeat(${staff.length}, 1fr)`;
+  const visibleStaff = staff.filter(s => !hiddenStaff.has(s.id));
+  const colTpl = `52px 140px repeat(${visibleStaff.length}, 1fr)`;
   document.getElementById('week-hdr').style.gridTemplateColumns = colTpl;
 
   // 주간 헤더: 직원 이름 가로
@@ -731,7 +748,7 @@ function render() {
     <div class="wh-staff wh-schedule-hd">
       <span style="font-size:11px;font-weight:800;color:var(--teal)">📅 학사일정</span>
     </div>` +
-    staff.map(s => `
+    visibleStaff.map(s => `
       <div class="wh-staff">
         <div class="wh-staff-dot" style="background:${s.color}"></div>
         <span class="wh-staff-name">${escHtml(s.name)}</span>
@@ -748,7 +765,7 @@ function render() {
     if(dow === 0) rowCls += ' sun-row';
     if(dow === 6) rowCls += ' sat-row';
 
-    const cells = staff.map(s => {
+    const cells = visibleStaff.map(s => {
       const key = `${s.id}_${dk}`;
       const items = todos[key] || [];
       const todosHtml = items.map(t => {
@@ -756,9 +773,15 @@ function render() {
         const itemCls = st === 'ing' ? 'status-ing' : st === 'done' ? 'status-done' : '';
         const btnCls  = `s-${st}`;
         const btnLbl  = st === 'ing' ? '진행' : st === 'done' ? '완료' : '대기';
+        const full = escHtml(t.text);
+        const isLong = t.text.length > 50;
+        const short = isLong ? escHtml(t.text.slice(0,50)) + '<span class="ellipsis">…</span>' : full;
+        const textHtml = isLong
+          ? `<span class="todo-text expandable" onclick="toggleExpand(this)" data-full="${full}" data-short="${short}">${short}</span>`
+          : `<span class="todo-text">${full}</span>`;
         return `<div class="todo-item ${itemCls}" id="ti-${t.id}">
           <button class="status-btn ${btnCls}" onclick="cycleStatus('${s.id}','${dk}','${t.id}')">${btnLbl}</button>
-          <span class="todo-text">${escHtml(t.text)}</span>
+          ${textHtml}
           <button class="todo-del" onclick="deleteTodo('${s.id}','${dk}','${t.id}')">✕</button>
         </div>`;
       }).join('');
@@ -932,6 +955,16 @@ async function deleteSchedule(dk, id) {
 function saveStaffLocal() {
   try { localStorage.setItem('quetta_staff', JSON.stringify(staff)); } catch(e) {}
 }
+function saveHiddenLocal() {
+  try { localStorage.setItem('quetta_hidden', JSON.stringify([...hiddenStaff])); } catch(e) {}
+}
+function toggleHideStaff(id) {
+  if(hiddenStaff.has(id)) hiddenStaff.delete(id);
+  else hiddenStaff.add(id);
+  saveHiddenLocal();
+  renderStaffModal();
+  render();
+}
 function loadStaffLocal() {
   try {
     const d = localStorage.getItem('quetta_staff');
@@ -1019,13 +1052,15 @@ function renderStaffModal() {
     sl.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px 0">아직 직원이 없습니다</div>';
     return;
   }
-  sl.innerHTML = staff.map(s => `
-    <div class="staff-list-item">
-      <div class="staff-list-dot" style="background:${s.color}"></div>
-      <span class="staff-list-name">${escHtml(s.name)}</span>
+  sl.innerHTML = staff.map(s => {
+    const isHidden = hiddenStaff.has(s.id);
+    return `<div class="staff-list-item ${isHidden?'staff-hidden':''}">
+      <div class="staff-list-dot" style="background:${isHidden?'#cbd5e1':s.color}"></div>
+      <span class="staff-list-name" style="${isHidden?'color:var(--text3);text-decoration:line-through':''}">${escHtml(s.name)}</span>
+      <button class="staff-hide-btn ${isHidden?'hidden-on':''}" onclick="toggleHideStaff('${s.id}')" title="${isHidden?'표시':'숨김'}">${isHidden?'👁 표시':'🙈 숨김'}</button>
       <button class="staff-list-del" onclick="confirmDelStaff('${s.id}')">✕</button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function selectColor(c) {
@@ -1088,6 +1123,12 @@ function escHtml(s) {
 }
 
 let _tt;
+function toggleExpand(el) {
+  const isFull = el.dataset.expanded === '1';
+  el.innerHTML = isFull ? el.dataset.short : el.dataset.full;
+  el.dataset.expanded = isFull ? '0' : '1';
+}
+
 function toast(msg, type='') {
   const el = document.getElementById('toast');
   el.textContent = msg;
