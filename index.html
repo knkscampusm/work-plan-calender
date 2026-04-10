@@ -81,7 +81,6 @@ input, textarea { font-family: inherit; }
 }
 .hdr-spacer { flex: 1; }
 
-/* week-nav → hdr-center로 통합 */
 .btn-nav {
   width: 30px;
   height: 30px;
@@ -129,7 +128,6 @@ input, textarea { font-family: inherit; }
 }
 .btn-staff:hover { background: var(--amber-dim); color: var(--amber); border-color: var(--amber); }
 
-/* ── 검색바 (헤더 내 인라인) ── */
 #search-bar { display: none; }
 .search-input-wrap {
   display: flex;
@@ -166,7 +164,6 @@ input, textarea { font-family: inherit; }
 .search-clear.on { display: flex; }
 .search-clear:hover { background: var(--red); }
 
-/* 검색 결과 드롭다운 */
 #search-results {
   position: absolute;
   top: calc(100% + 4px);
@@ -268,7 +265,7 @@ input, textarea { font-family: inherit; }
 }
 .date-jump-btn:hover { background: #0f766e; }
 
-/* ── WEEK HEADER (직원 가로) ── */
+/* ── WEEK HEADER ── */
 #week-hdr {
   display: grid;
   border-bottom: 1px solid var(--border);
@@ -305,7 +302,7 @@ input, textarea { font-family: inherit; }
   color: var(--text);
 }
 
-/* ── GRID (날짜 세로) ── */
+/* ── GRID ── */
 #grid {
   display: flex;
   flex-direction: column;
@@ -349,7 +346,6 @@ input, textarea { font-family: inherit; }
 .day-row.sun-row .day-label-dn { color: #ef4444; }
 .day-row.sat-row .day-label-dd,
 .day-row.sat-row .day-label-dn { color: #3b82f6; }
-.day-row.past-row { }
 
 .day-cell {
   padding: 6px 8px;
@@ -392,8 +388,7 @@ input, textarea { font-family: inherit; }
   margin-top: 1px;
 }
 .add-sch-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-dim); }
-/* edit → modal 방식으로 변경 */
-/* 드래그 앤 드롭 */
+
 .todo-item.dragging {
   opacity: .35;
   transform: scale(.97);
@@ -426,19 +421,15 @@ input, textarea { font-family: inherit; }
   transition: all .12s;
 }
 .todo-item:hover { border-color: var(--border2); }
-
-/* 진행중 */
 .todo-item.status-ing {
   border-color: rgba(251,191,36,.35);
   background: rgba(251,191,36,.06);
 }
-/* 완료 */
 .todo-item.status-done {
   text-decoration: line-through;
   border-color: rgba(13,148,136,.2);
 }
 
-/* 상태 뱃지 (클릭으로 순환) */
 .status-btn {
   flex-shrink: 0;
   margin-top: 1px;
@@ -453,20 +444,17 @@ input, textarea { font-family: inherit; }
   transition: all .12s;
   line-height: 1.6;
 }
-/* 공란 */
 .status-btn.s-none {
   background: var(--bg);
   color: var(--text3);
   border: 1px solid var(--border2);
 }
 .status-btn.s-none:hover { color: var(--amber); border-color: var(--amber); }
-/* 진행중 */
 .status-btn.s-ing {
   background: var(--amber-dim);
   color: var(--amber);
   border: 1px solid rgba(251,191,36,.4);
 }
-/* 완료 */
 .status-btn.s-done {
   background: var(--teal-dim);
   color: var(--teal);
@@ -512,7 +500,6 @@ input, textarea { font-family: inherit; }
 }
 .add-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-dim); }
 
-/* inline input */
 .inline-input-wrap {
   display: flex;
   gap: 4px;
@@ -558,7 +545,7 @@ input, textarea { font-family: inherit; }
 #empty-state .em-text { font-size: 15px; font-weight: 600; color: var(--text2); }
 #empty-state .em-sub { font-size: 12px; }
 
-/* ── MODAL (직원 관리) ── */
+/* ── MODAL ── */
 .overlay {
   display: none;
   position: fixed;
@@ -694,7 +681,6 @@ input, textarea { font-family: inherit; }
 .staff-order-btn:hover { background: var(--teal-dim); color: var(--teal); border-color: var(--teal); }
 .staff-order-btn:disabled { opacity: .25; cursor: not-allowed; }
 
-/* 색상 선택 */
 .color-picker { display: flex; gap: 6px; flex-wrap: wrap; }
 .color-opt {
   width: 22px;
@@ -706,6 +692,149 @@ input, textarea { font-family: inherit; }
 }
 .color-opt:hover { transform: scale(1.15); }
 .color-opt.sel { border-color: #fff; }
+
+/* ── 미니 캘린더 (일정 변경용) ── */
+#edit-cal-wrap {
+  display: none;
+}
+.mini-cal {
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg3);
+}
+.mini-cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--teal-dim);
+  border-bottom: 1px solid rgba(13,148,136,.15);
+}
+.mini-cal-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--teal);
+  font-family: 'DM Mono', monospace;
+}
+.mini-cal-nav-btn {
+  width: 22px; height: 22px;
+  border: none; background: transparent;
+  color: var(--teal); font-size: 15px;
+  cursor: pointer; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .1s; line-height: 1;
+}
+.mini-cal-nav-btn:hover { background: rgba(13,148,136,.18); }
+.mini-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.mini-cal-dow {
+  background: var(--bg2);
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text3);
+  padding: 5px 0 4px;
+  border-bottom: 1px solid var(--border);
+}
+.mini-cal-dow.sat { color: #3b82f6; }
+.mini-cal-dow.sun { color: #ef4444; }
+.mini-cal-day {
+  background: var(--white);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  padding: 6px 0;
+  cursor: pointer;
+  transition: background .1s, color .1s;
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.mini-cal-day:nth-child(7n) { border-right: none; }
+.mini-cal-day:hover:not(.empty) { background: var(--teal-dim); color: var(--teal); }
+.mini-cal-day.empty { background: var(--bg3); cursor: default; color: transparent; }
+.mini-cal-day.today::after {
+  content: '';
+  position: absolute;
+  bottom: 3px; left: 50%;
+  transform: translateX(-50%);
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--teal);
+}
+.mini-cal-day.today { color: var(--teal); font-weight: 900; }
+.mini-cal-day.selected {
+  background: var(--teal) !important;
+  color: #fff !important;
+  font-weight: 900;
+}
+.mini-cal-day.selected.today::after { background: rgba(255,255,255,.7); }
+.mini-cal-day.sat { color: #3b82f6; }
+.mini-cal-day.sun { color: #ef4444; }
+.mini-cal-day.cur-todo {
+  background: rgba(13,148,136,.08);
+  font-weight: 800;
+}
+.mini-cal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  background: var(--bg2);
+  gap: 8px;
+}
+.mini-cal-selected-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  flex: 1;
+  min-width: 0;
+}
+.mini-cal-selected-label.picked { color: var(--teal); }
+.mini-cal-confirm-btn {
+  padding: 5px 14px;
+  background: var(--teal);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .12s, opacity .12s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.mini-cal-confirm-btn:hover:not(:disabled) { background: #0f766e; }
+.mini-cal-confirm-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+/* 수정 모달 하단 버튼 행 */
+.edit-modal-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-date-change {
+  padding: 7px 12px;
+  border: 1.5px solid var(--border2);
+  border-radius: 8px;
+  background: var(--bg3);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.btn-date-change:hover { background: var(--teal-dim); color: var(--teal); border-color: var(--teal); }
+.btn-date-change.active { background: var(--teal-dim); color: var(--teal); border-color: var(--teal); }
 
 /* 전문 모달 */
 .text-modal-overlay {
@@ -786,7 +915,6 @@ input, textarea { font-family: inherit; }
 #toast.ok { border-color: var(--teal); color: var(--teal); }
 #toast.err { border-color: var(--red); color: var(--red); }
 
-/* 로딩 */
 .spin {
   display: inline-block;
   width: 14px;
@@ -798,7 +926,6 @@ input, textarea { font-family: inherit; }
 }
 @keyframes sp { to { transform: rotate(360deg); } }
 
-/* 스크롤바 */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
@@ -838,7 +965,7 @@ input, textarea { font-family: inherit; }
 </head>
 <body>
 
-<!-- HEADER (단일 행 3분할) -->
+<!-- HEADER -->
 <div id="hdr">
   <div class="hdr-left">
     <span class="logo-q">의대관</span>
@@ -872,7 +999,6 @@ input, textarea { font-family: inherit; }
 <!-- WEEK HEADER -->
 <div id="week-hdr">
   <div class="wh-spacer"></div>
-  <!-- 7 days injected by JS -->
 </div>
 
 <!-- GRID -->
@@ -910,6 +1036,7 @@ input, textarea { font-family: inherit; }
   </div>
 </div>
 
+<!-- 전문 모달 -->
 <div class="text-modal-overlay" id="text-modal" onclick="if(event.target===this)closeTextModal()">
   <div class="text-modal">
     <div class="text-modal-hd">
@@ -919,30 +1046,45 @@ input, textarea { font-family: inherit; }
     <div class="text-modal-body" id="text-modal-body"></div>
   </div>
 </div>
+
+<!-- 수정 MODAL -->
 <div class="overlay" id="edit-modal" onclick="if(event.target===this)closeEditModal()">
-  <div class="modal" style="width:400px">
+  <div class="modal" style="width:420px">
     <div class="modal-hd">
       ✏️ 할일 수정
       <button class="modal-close" onclick="closeEditModal()">✕</button>
     </div>
     <div class="modal-body" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+
+      <!-- 텍스트 입력 -->
       <textarea id="edit-modal-input" class="modal-input"
         style="resize:vertical;min-height:80px;padding:9px 12px;font-size:13px;line-height:1.6"
         maxlength="200" placeholder="할일 내용 입력"></textarea>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
+
+      <!-- 미니 캘린더 (일정 변경) -->
+      <div id="edit-cal-wrap"></div>
+
+      <!-- 하단 버튼 행 -->
+      <div class="edit-modal-footer">
+        <!-- 일정 변경 토글 -->
+        <button class="btn-date-change" id="btn-date-change" onclick="toggleDatePicker()">
+          📅 일정 변경
+        </button>
+        <div style="flex:1"></div>
         <button onclick="closeEditModal()"
-          style="padding:7px 16px;border:1.5px solid var(--sl200);border-radius:8px;background:var(--white);color:var(--sl500);font-size:13px;font-weight:700;cursor:pointer">취소</button>
+          style="padding:7px 16px;border:1.5px solid var(--border2);border-radius:8px;background:var(--white);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer">취소</button>
         <button onclick="confirmEditTodo()"
           style="padding:7px 16px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-size:13px;font-weight:700;cursor:pointer">저장</button>
       </div>
     </div>
   </div>
 </div>
+
 <div id="toast"></div>
 
 <script>
 /* ══════════════════════════════
-   🔧 Firebase 설정 (교체 필요)
+   🔧 Firebase 설정
 ══════════════════════════════ */
 const FB = {
   apiKey: "AIzaSyCBJ-ESvqR4i1mcfHZ1K6ww-bAyS_P5Azw",
@@ -965,13 +1107,18 @@ const COLORS = [
 ══════════════════════════════ */
 let db = null;
 let weekOffset = 0;
-let staff = [];      // [{id, name, color}]
-let todos = {};      // { "staffId_YYYY-MM-DD": [{id, text, done}] }
-let schedules = {}; // { "YYYY-MM-DD": [{id, text}] }
+let staff = [];
+let todos = {};
+let schedules = {};
 let selectedColor = COLORS[0];
 let listeners = [];
 let _editCtx = null; // {staffId, dk, id}
 let hiddenStaff = new Set(JSON.parse(localStorage.getItem('quetta_hidden')||'[]'));
+
+/* ── 미니 캘린더 상태 ── */
+let _calMonth = null;   // { year, month }
+let _calSelected = null; // "YYYY-MM-DD"
+let _calOpen = false;
 
 /* ══════════════════════════════
    Firebase 초기화
@@ -993,7 +1140,7 @@ function initFirebase() {
 function getWeekDates(offset = 0) {
   const today = new Date();
   today.setHours(0,0,0,0);
-  const day = today.getDay(); // 0=일
+  const day = today.getDay();
   const mon = new Date(today);
   mon.setDate(today.getDate() - (day === 0 ? 6 : day - 1) + offset * 7);
   return Array.from({length: 7}, (_, i) => {
@@ -1024,18 +1171,14 @@ const DAY_EN = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
    렌더
 ══════════════════════════════ */
 function render() {
-  // week-hdr top을 헤더 실제 높이에 맞춤
   const hdrH = document.getElementById('hdr').offsetHeight;
   document.getElementById('week-hdr').style.top = hdrH + 'px';
   const dates = getWeekDates(weekOffset);
-  const todayObj = new Date(); todayObj.setHours(0,0,0,0);
 
-  // 주간 라벨
   const s = dates[0], e = dates[6];
   document.getElementById('week-label').textContent =
     `${s.getFullYear()}.${String(s.getMonth()+1).padStart(2,'0')}.${String(s.getDate()).padStart(2,'0')} – ${String(e.getMonth()+1).padStart(2,'0')}.${String(e.getDate()).padStart(2,'0')}`;
 
-  // 그리드
   const grid = document.getElementById('grid');
   const empty = document.getElementById('empty-state');
 
@@ -1046,12 +1189,10 @@ function render() {
   }
   empty.style.display = 'none';
 
-  // 그리드 컬럼 = 날짜라벨 + 직원수
   const visibleStaff = staff.filter(s => !hiddenStaff.has(s.id));
   const colTpl = `80px repeat(${visibleStaff.length}, 1fr)`;
   document.getElementById('week-hdr').style.gridTemplateColumns = colTpl;
 
-  // 주간 헤더: 직원 이름 가로
   const whdr = document.getElementById('week-hdr');
   whdr.innerHTML = `<div class="wh-spacer"></div>` +
     visibleStaff.map(s => `
@@ -1060,7 +1201,6 @@ function render() {
       </div>
     `).join('');
 
-  // 행 = 날짜 (7행)
   grid.innerHTML = dates.map(d => {
     const dk = dateKey(d);
     const dow = d.getDay();
@@ -1125,7 +1265,6 @@ function render() {
    할일 추가 (인라인)
 ══════════════════════════════ */
 function startAdd(staffId, dk, btn) {
-  // 이미 인풋 열려있으면 닫기
   const exist = btn.parentElement.querySelector('.inline-input-wrap');
   if(exist) { exist.remove(); btn.style.display='flex'; return; }
 
@@ -1140,7 +1279,6 @@ function startAdd(staffId, dk, btn) {
 
   const inp = wrap.querySelector('input');
   const ok  = wrap.querySelector('button');
-
   inp.focus();
 
   const save = () => {
@@ -1196,26 +1334,41 @@ async function deleteTodo(staffId, dk, id) {
 }
 
 function startEditTodo(staffId, dk, id) {
-  // todos 객체에서 직접 원문 가져오기 (HTML escape 문제 없음)
   const key = `${staffId}_${dk}`;
   const item = (todos[key]||[]).find(t => t.id === id);
   if(!item) return;
   _editCtx = { staffId, dk, id };
+
+  // 캘린더 초기화
+  _calSelected = null;
+  _calOpen = false;
+  document.getElementById('edit-cal-wrap').style.display = 'none';
+  document.getElementById('edit-cal-wrap').innerHTML = '';
+  document.getElementById('btn-date-change').classList.remove('active');
+
   const inp = document.getElementById('edit-modal-input');
   inp.value = item.text;
   document.getElementById('edit-modal').classList.add('on');
   setTimeout(() => { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }, 50);
 }
+
 function closeEditModal() {
   document.getElementById('edit-modal').classList.remove('on');
   _editCtx = null;
+  _calSelected = null;
+  _calOpen = false;
+  document.getElementById('edit-cal-wrap').style.display = 'none';
+  document.getElementById('edit-cal-wrap').innerHTML = '';
+  document.getElementById('btn-date-change').classList.remove('active');
 }
+
 document.getElementById('edit-modal').addEventListener('keydown', e => {
   if(e.key === 'Enter' && !e.shiftKey) {
+    // 캘린더 열려있을 때는 Enter 막기
+    if(_calOpen) return;
     e.preventDefault();
     confirmEditTodo();
   }
-  // Shift+Enter는 기본 동작(줄바꿈) 허용
 });
 
 async function confirmEditTodo() {
@@ -1225,7 +1378,7 @@ async function confirmEditTodo() {
   const {staffId, dk, id} = _editCtx;
   closeEditModal();
   await updateTodo(staffId, dk, id, newText);
-  toast('수정 완료','ok');
+  toast('수정 완료 ✓','ok');
 }
 
 async function updateTodo(staffId, dk, id, newText) {
@@ -1234,11 +1387,8 @@ async function updateTodo(staffId, dk, id, newText) {
   if(!item) return;
   item.text = newText;
 
-  // render() 대신 해당 DOM 요소만 직접 업데이트
   const itemEl = document.getElementById(`ti-${id}`);
   if(itemEl) {
-    const wrap = itemEl.querySelector('.edit-input-wrap');
-    if(wrap) wrap.remove();
     let textEl = itemEl.querySelector('.todo-text');
     if(textEl) {
       textEl.style.display = '';
@@ -1246,20 +1396,14 @@ async function updateTodo(staffId, dk, id, newText) {
       if(isLong) {
         const short = escHtml(newText.slice(0,50)) + '<span class="ellipsis">…</span>';
         textEl.className = 'todo-text expandable';
-        textEl.title = '클릭: 전문보기 / 더블클릭: 수정';
-        textEl.dataset.full = newText;
+        textEl.title = '클릭: 수정';
         textEl.innerHTML = short;
-        textEl.onclick = () => openTextModal(textEl.dataset.full);
         textEl.onclick = () => startEditTodo(staffId, dk, id);
-      textEl.ondblclick = null;
       } else {
         textEl.className = 'todo-text';
-        textEl.title = '더블클릭: 수정';
-        textEl.dataset.full = '';
+        textEl.title = '클릭: 수정';
         textEl.innerHTML = escHtml(newText);
-        textEl.onclick = null;
         textEl.onclick = () => startEditTodo(staffId, dk, id);
-      textEl.ondblclick = null;
       }
     }
   }
@@ -1270,10 +1414,182 @@ async function updateTodo(staffId, dk, id, newText) {
 }
 
 /* ══════════════════════════════
+   📅 미니 캘린더 (일정 변경)
+══════════════════════════════ */
+function toggleDatePicker() {
+  _calOpen = !_calOpen;
+  const wrap = document.getElementById('edit-cal-wrap');
+  const btn  = document.getElementById('btn-date-change');
+
+  if(!_calOpen) {
+    wrap.style.display = 'none';
+    wrap.innerHTML = '';
+    btn.classList.remove('active');
+    _calSelected = null;
+    return;
+  }
+
+  // 현재 할일 날짜 기준으로 달력 열기
+  if(_editCtx) {
+    const [y, m] = _editCtx.dk.split('-').map(Number);
+    _calMonth = { year: y, month: m };
+  } else {
+    const now = new Date();
+    _calMonth = { year: now.getFullYear(), month: now.getMonth() + 1 };
+  }
+  _calSelected = null;
+  wrap.style.display = 'block';
+  btn.classList.add('active');
+  renderMiniCal();
+}
+
+function renderMiniCal() {
+  const { year, month } = _calMonth;
+  const firstDow = new Date(year, month - 1, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayDk = dateKey(today);
+  const curTodoDk = _editCtx ? _editCtx.dk : null;
+
+  // 월요일 시작: offset = (firstDow + 6) % 7  (0=Mon)
+  const startOffset = (firstDow + 6) % 7;
+  const dows = ['월','화','수','목','금','토','일'];
+
+  let gridCells = '';
+
+  // 헤더
+  const dowHeaders = dows.map((d, i) => {
+    const cls = i === 5 ? 'sat' : i === 6 ? 'sun' : '';
+    return `<div class="mini-cal-dow ${cls}">${d}</div>`;
+  }).join('');
+
+  // 빈 셀
+  for(let i = 0; i < startOffset; i++) {
+    gridCells += `<div class="mini-cal-day empty"></div>`;
+  }
+
+  // 날짜 셀
+  for(let d = 1; d <= daysInMonth; d++) {
+    const dk = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const colIdx = (startOffset + d - 1) % 7; // 0=Mon, 5=Sat, 6=Sun
+    let cls = '';
+    if(colIdx === 5) cls += ' sat';
+    if(colIdx === 6) cls += ' sun';
+    if(dk === todayDk) cls += ' today';
+    if(dk === _calSelected) cls += ' selected';
+    else if(dk === curTodoDk && dk !== _calSelected) cls += ' cur-todo';
+
+    const isCur = dk === curTodoDk;
+    const title = isCur ? '현재 날짜' : '';
+    gridCells += `<div class="mini-cal-day${cls}" onclick="selectCalDate('${dk}')" title="${title}">${d}</div>`;
+  }
+
+  // 선택된 날짜 라벨
+  let labelHtml = '';
+  let confirmDisabled = 'disabled';
+  if(_calSelected) {
+    labelHtml = `<span class="mini-cal-selected-label picked">→ ${formatDkDisplay(_calSelected)}</span>`;
+    if(_calSelected !== curTodoDk) confirmDisabled = '';
+  } else {
+    labelHtml = `<span class="mini-cal-selected-label">날짜를 선택하세요</span>`;
+  }
+
+  document.getElementById('edit-cal-wrap').innerHTML = `
+    <div class="mini-cal">
+      <div class="mini-cal-nav">
+        <button class="mini-cal-nav-btn" onclick="miniCalMove(-1)">‹</button>
+        <span class="mini-cal-title">${year}년 ${month}월</span>
+        <button class="mini-cal-nav-btn" onclick="miniCalMove(1)">›</button>
+      </div>
+      <div class="mini-cal-grid">
+        ${dowHeaders}
+        ${gridCells}
+      </div>
+      <div class="mini-cal-footer">
+        ${labelHtml}
+        <button class="mini-cal-confirm-btn" onclick="confirmMoveDate()" ${confirmDisabled}>확인</button>
+      </div>
+    </div>
+  `;
+}
+
+function miniCalMove(dir) {
+  let { year, month } = _calMonth;
+  month += dir;
+  if(month > 12) { month = 1; year++; }
+  if(month < 1)  { month = 12; year--; }
+  _calMonth = { year, month };
+  renderMiniCal();
+}
+
+function selectCalDate(dk) {
+  if(dk === (_editCtx ? _editCtx.dk : null)) {
+    toast('현재 날짜와 동일합니다', 'err');
+    return;
+  }
+  _calSelected = dk;
+  renderMiniCal();
+}
+
+async function confirmMoveDate() {
+  if(!_calSelected || !_editCtx) return;
+  const { staffId, dk: fromDk, id } = _editCtx;
+
+  if(_calSelected === fromDk) {
+    toast('같은 날짜입니다', 'err');
+    return;
+  }
+
+  const fromKey = `${staffId}_${fromDk}`;
+  const toKey   = `${staffId}_${_calSelected}`;
+
+  const fromList = todos[fromKey] || [];
+  const idx = fromList.findIndex(t => t.id === id);
+  if(idx < 0) return;
+
+  // 현재 입력된 텍스트 함께 반영
+  const newText = document.getElementById('edit-modal-input').value.trim();
+  const [item] = fromList.splice(idx, 1);
+  if(newText) item.text = newText;
+
+  if(!todos[toKey]) todos[toKey] = [];
+  todos[toKey].push(item);
+
+  const targetDk = _calSelected;
+  const displayLabel = formatDkDisplay(targetDk);
+
+  closeEditModal();
+  render();
+
+  // Firebase 업데이트
+  if(db) {
+    try {
+      await db.ref(`${todoPath(staffId, fromDk)}/${id}`).remove();
+      await db.ref(`${todoPath(staffId, targetDk)}/${id}`).set(item);
+    } catch(e) {
+      toast('이동 중 오류 발생', 'err');
+      return;
+    }
+  }
+
+  // 해당 주로 이동
+  goToDate(targetDk);
+  toast(`${displayLabel}로 이동됨 ✓`, 'ok');
+}
+
+/* 날짜 포맷 표시 */
+function formatDkDisplay(dk) {
+  const [y, m, d] = dk.split('-');
+  const date = new Date(Number(y), Number(m) - 1, Number(d));
+  const dow = DAY_KO[date.getDay()];
+  return `${y}.${m}.${d} (${dow})`;
+}
+
+/* ══════════════════════════════
    드래그 앤 드롭
 ══════════════════════════════ */
-let _drag = null; // { staffId, dk, id }
-let _dragId = null; // 별도 보관 (dragend에서 정리용)
+let _drag = null;
+let _dragId = null;
 
 function onTodoDragStart(e, staffId, dk, id) {
   _drag = { staffId, dk, id };
@@ -1283,7 +1599,6 @@ function onTodoDragStart(e, staffId, dk, id) {
 }
 
 function onTodoDragEnd(e) {
-  // _drag와 무관하게 _dragId로 항상 클래스 정리
   if(_dragId) {
     const el = document.getElementById(`ti-${_dragId}`);
     if(el) el.classList.remove('dragging');
@@ -1310,9 +1625,6 @@ async function onCellDrop(e, toStaffId, toDk) {
   if(!_drag) return;
 
   const { staffId: fromStaffId, dk: fromDk, id } = _drag;
-  // _drag는 onTodoDragEnd에서 정리 — 여기서 null 안 함
-
-  // 같은 셀이면 무시
   if(fromStaffId === toStaffId && fromDk === toDk) return;
 
   const fromKey = `${fromStaffId}_${fromDk}`;
@@ -1329,7 +1641,6 @@ async function onCellDrop(e, toStaffId, toDk) {
   render();
   scrollToToday();
 
-  // Firebase 업데이트
   if(db) {
     try {
       await db.ref(`${todoPath(fromStaffId, fromDk)}/${id}`).remove();
@@ -1403,7 +1714,6 @@ async function deleteSchedule(dk, id) {
 /* ══════════════════════════════
    직원 관리
 ══════════════════════════════ */
-/* ── localStorage ── */
 function saveStaffLocal() {
   try { localStorage.setItem('quetta_staff', JSON.stringify(staff)); } catch(e) {}
 }
@@ -1470,7 +1780,6 @@ async function deleteStaff(id) {
   staff = staff.filter(s => s.id !== id);
   saveStaffLocal();
 
-  // 관련 todos 삭제
   for(const k of Object.keys(todos)) {
     if(k.startsWith(id + '_')) delete todos[k];
   }
@@ -1501,7 +1810,6 @@ function closeStaffModal() {
 }
 
 function renderStaffModal() {
-  // 직원 목록
   const sl = document.getElementById('staff-list-modal');
   if(staff.length === 0) {
     sl.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px 0">아직 직원이 없습니다</div>';
@@ -1514,7 +1822,6 @@ function renderStaffModal() {
         <button class="staff-order-btn" onclick="moveStaff('${s.id}',-1)" ${i===0?'disabled':''}>▲</button>
         <button class="staff-order-btn" onclick="moveStaff('${s.id}',1)" ${i===staff.length-1?'disabled':''}>▼</button>
       </div>
-
       <span class="staff-list-name" style="${isHidden?'color:var(--text3);text-decoration:line-through':''}">${escHtml(s.name)}</span>
       <button class="staff-hide-btn ${isHidden?'hidden-on':''}" onclick="toggleHideStaff('${s.id}')" title="${isHidden?'표시':'숨김'}">${isHidden?'표시':'숨김'}</button>
       <button class="staff-list-del" onclick="confirmDelStaff('${s.id}')">✕</button>
@@ -1541,7 +1848,6 @@ function scrollToToday() {
     }, 100);
   }
 }
-
 function goToday() { weekOffset = 0; render(); scrollToToday(); }
 
 /* ══════════════════════════════
@@ -1550,11 +1856,9 @@ function goToday() { weekOffset = 0; render(); scrollToToday(); }
 function startListening() {
   if(!db) return;
 
-  // 직원 목록
   db.ref('staff').on('value', snap => {
     const val = snap.val() || {};
     const fbStaff = Object.values(val);
-    // localStorage 순서 우선 적용
     const saved = JSON.parse(localStorage.getItem('quetta_staff')||'[]');
     const savedIds = saved.map(s=>s.id);
     const ordered = [
@@ -1567,7 +1871,6 @@ function startListening() {
     renderStaffModal();
   });
 
-  // 학사일정
   db.ref('schedules').on('value', snap => {
     const val = snap.val() || {};
     schedules = {};
@@ -1577,7 +1880,6 @@ function startListening() {
     render();
   });
 
-  // 할일 전체
   db.ref('todos').on('value', snap => {
     const val = snap.val() || {};
     todos = {};
@@ -1591,9 +1893,6 @@ function startListening() {
   });
 }
 
-/* ══════════════════════════════
-   유틸
-══════════════════════════════ */
 /* ══════════════════════════════
    검색
 ══════════════════════════════ */
@@ -1609,13 +1908,11 @@ function doSearch(q) {
   const lower = q.toLowerCase();
   const results = [];
 
-  // todos 키는 "staffId_YYYY-MM-DD" 형태
   for(const [key, items] of Object.entries(todos)) {
     const underIdx = key.lastIndexOf('_');
     if(underIdx < 0) continue;
     const staffId = key.slice(0, underIdx);
     const dk = key.slice(underIdx + 1);
-    // YYYY-MM-DD 형태 검증
     if(!/^\d{4}-\d{2}-\d{2}$/.test(dk)) continue;
     const s = staff.find(s => s.id === staffId);
     if(!s) continue;
@@ -1647,7 +1944,6 @@ function doSearch(q) {
       ? `<span class="sr-status ing">진행</span>`
       : '';
     const [y,m,d] = r.dk.split('-');
-    const dateStr = `${y}.${m}.${d}`;
     return `<div class="sr-item" onclick="goToDate('${r.dk}')">
       <span class="sr-date">${y}.${m}.${d}</span>
       <span class="sr-who">${escHtml(r.staffName)}</span>
@@ -1660,24 +1956,26 @@ function doSearch(q) {
 function goToDate(dk) {
   const d = new Date(dk);
   const today = new Date(); today.setHours(0,0,0,0);
-  const diff = Math.round((d - today) / (7*24*60*60*1000));
-  weekOffset = diff < 0 ? Math.floor(diff) : Math.ceil(diff);
-  // 해당 주로 정확히 이동
-  const dates = getWeekDates(weekOffset);
-  const found = dates.some(dd => dateKey(dd) === dk);
-  if(!found) {
-    // 주 오프셋 재계산
-    const mon = new Date(d);
-    const dow = d.getDay();
-    mon.setDate(d.getDate() - (dow===0?6:dow-1));
-    const todayMon = new Date(today);
-    const todayDow = today.getDay();
-    todayMon.setDate(today.getDate() - (todayDow===0?6:todayDow-1));
-    weekOffset = Math.round((mon - todayMon) / (7*24*60*60*1000));
-  }
+  const mon = new Date(d);
+  const dow = d.getDay();
+  mon.setDate(d.getDate() - (dow===0?6:dow-1));
+  const todayMon = new Date(today);
+  const todayDow = today.getDay();
+  todayMon.setDate(today.getDate() - (todayDow===0?6:todayDow-1));
+  weekOffset = Math.round((mon - todayMon) / (7*24*60*60*1000));
   render();
   closeSearchResults();
   clearSearch();
+  // 해당 날짜 row로 스크롤
+  setTimeout(() => {
+    const rows = document.querySelectorAll('.day-row');
+    const dates = getWeekDates(weekOffset);
+    dates.forEach((dd, i) => {
+      if(dateKey(dd) === dk && rows[i]) {
+        rows[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }, 150);
 }
 
 function closeSearchResults() {
@@ -1731,7 +2029,6 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// 검색창 외부 클릭 시 닫기
 document.addEventListener('click', e => {
   const bar = document.getElementById('search-bar');
   if(bar && !bar.contains(e.target)) closeSearchResults();
@@ -1740,12 +2037,10 @@ document.addEventListener('click', e => {
 /* ══════════════════════════════
    INIT
 ══════════════════════════════ */
-// 기본 직원 순서 (localStorage에 없을 때 적용)
 const DEFAULT_ORDER = ['김리아', '이동현', '강보름', '김수빈', '조병일'];
 
 window.onload = () => {
   loadStaffLocal();
-  // localStorage에 순서 없으면 기본 순서 적용
   if(staff.length > 1) {
     const hasOrder = localStorage.getItem('quetta_staff');
     if(!hasOrder) {
@@ -1761,7 +2056,6 @@ window.onload = () => {
   const ok = initFirebase();
   if(ok) {
     startListening();
-    // Firebase 데이터 로드 후 스크롤 (약간 딜레이)
     setTimeout(scrollToToday, 800);
   } else {
     render();
