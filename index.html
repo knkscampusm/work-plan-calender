@@ -1373,6 +1373,11 @@ document.getElementById('edit-modal').addEventListener('keydown', e => {
 
 async function confirmEditTodo() {
   if(!_editCtx) return;
+  // 캘린더가 열려있고 날짜가 선택된 경우 → 일정 변경으로 처리
+  if(_calOpen && _calSelected) {
+    await confirmMoveDate();
+    return;
+  }
   const newText = document.getElementById('edit-modal-input').value.trim();
   if(!newText) { toast('내용을 입력하세요','err'); return; }
   const {staffId, dk, id} = _editCtx;
@@ -1451,15 +1456,15 @@ function renderMiniCal() {
   const todayDk = dateKey(today);
   const curTodoDk = _editCtx ? _editCtx.dk : null;
 
-  // 월요일 시작: offset = (firstDow + 6) % 7  (0=Mon)
-  const startOffset = (firstDow + 6) % 7;
-  const dows = ['월','화','수','목','금','토','일'];
+  // 일요일 시작: offset = firstDow (0=Sun)
+  const startOffset = firstDow;
+  const dows = ['일','월','화','수','목','금','토'];
 
   let gridCells = '';
 
   // 헤더
   const dowHeaders = dows.map((d, i) => {
-    const cls = i === 5 ? 'sat' : i === 6 ? 'sun' : '';
+    const cls = i === 0 ? 'sun' : i === 6 ? 'sat' : '';
     return `<div class="mini-cal-dow ${cls}">${d}</div>`;
   }).join('');
 
@@ -1471,10 +1476,10 @@ function renderMiniCal() {
   // 날짜 셀
   for(let d = 1; d <= daysInMonth; d++) {
     const dk = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const colIdx = (startOffset + d - 1) % 7; // 0=Mon, 5=Sat, 6=Sun
+    const colIdx = (startOffset + d - 1) % 7; // 0=Sun, 6=Sat
     let cls = '';
-    if(colIdx === 5) cls += ' sat';
-    if(colIdx === 6) cls += ' sun';
+    if(colIdx === 6) cls += ' sat';
+    if(colIdx === 0) cls += ' sun';
     if(dk === todayDk) cls += ' today';
     if(dk === _calSelected) cls += ' selected';
     else if(dk === curTodoDk && dk !== _calSelected) cls += ' cur-todo';
