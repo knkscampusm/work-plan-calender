@@ -480,14 +480,20 @@ input, textarea { font-family: inherit; }
   flex: 1;
 }
 .month-staff-count {
-  font-size: 9px;
-  font-weight: 800;
-  background: rgba(0,0,0,.1);
-  color: #475569;
-  padding: 0px 5px;
-  border-radius: 10px;
-  white-space: nowrap;
-  flex-shrink: 0;
+  font-size: 9px; font-weight: 800;
+  background: rgba(0,0,0,.1); color: #475569;
+  padding: 1px 5px; border-radius: 10px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.month-req-count {
+  font-size: 9px; font-weight: 800;
+  background: rgba(220,38,38,.12); color: #dc2626;
+  padding: 1px 5px; border-radius: 10px;
+  white-space: nowrap; flex-shrink: 0;
+  border: 1px solid rgba(220,38,38,.2);
+}
+.month-count-sep {
+  font-size: 9px; font-weight: 700; color: #94a3b8; flex-shrink: 0;
 }
 
 /* ══════════════════════════════
@@ -748,7 +754,9 @@ input, textarea { font-family: inherit; }
   background: transparent; font-size: 10px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   opacity: 0; transition: all .12s; padding: 0; flex-shrink: 0;
+  margin-left: auto;
 }
+.wh-staff { flex-direction: row !important; gap: 6px !important; padding: 8px 10px !important; }
 .wh-staff:hover .wh-req-btn { opacity: 1; }
 .wh-req-btn:hover { background: rgba(99,102,241,.1); border-color: #6366f1; }
 
@@ -886,37 +894,35 @@ input, textarea { font-family: inherit; }
 <div class="overlay" id="request-modal" onclick="if(event.target===this)closeRequestModal()">
   <div class="modal req-modal">
     <div class="modal-hd">
-      📋 업무 요청
+      📋 업무 요청 → <span id="req-to-badge" style="color:#6366f1;font-size:13px"></span>
       <button class="modal-close" onclick="closeRequestModal()">✕</button>
     </div>
     <div class="modal-body">
 
-      <!-- 요청자 → 수신자 -->
+      <!-- 요청자 -->
       <div class="req-field">
-        <div class="req-label">요청자 → 수신자</div>
-        <div class="req-val-row">
-          <select class="modal-input" id="req-from" style="flex:1;padding:8px 10px;font-size:13px;cursor:pointer">
-            <option value="">요청자 선택</option>
-          </select>
-          <span class="req-arrow-txt">→</span>
-          <div class="req-to-badge" id="req-to-badge">-</div>
-        </div>
+        <div class="req-label">요청자</div>
+        <select class="modal-input" id="req-from" style="padding:9px 10px;font-size:13px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px">
+          <option value="">요청자 선택</option>
+        </select>
       </div>
 
-      <!-- 요청 사항 -->
+      <!-- 내용 -->
       <div class="req-field">
-        <div class="req-label">요청 사항</div>
+        <div class="req-label">내용</div>
         <textarea class="req-textarea" id="req-content" placeholder="요청 내용을 입력하세요" maxlength="100"></textarea>
       </div>
 
       <!-- 기간 -->
       <div class="req-field">
         <div class="req-label">기간</div>
-        <div class="req-date-row">
-          <input type="date" class="req-date-input" id="req-start-date" title="시작일 (해당 날짜에 표시)">
-          <span class="req-date-sep">완료기한</span>
-          <input type="date" class="req-date-input" id="req-end-date" title="완료기한">
-        </div>
+        <input type="date" class="req-date-input" id="req-start-date" style="width:100%">
+      </div>
+
+      <!-- 완료기간 -->
+      <div class="req-field">
+        <div class="req-label">완료기간</div>
+        <input type="date" class="req-date-input" id="req-end-date" style="width:100%">
       </div>
 
       <button class="req-submit-btn" onclick="submitRequest()">추가</button>
@@ -1279,10 +1285,14 @@ function renderMonth() {
       const items = todos[key]||[];
       if(items.length===0) return '';
       const color = sv.color||'#0d9488';
+      const normalCnt  = items.filter(t => !t.isRequest).length;
+      const requestCnt = items.filter(t =>  t.isRequest).length;
+      const normalBadge  = normalCnt  > 0 ? `<span class="month-staff-count">${normalCnt}건</span>` : '';
+      const requestBadge = requestCnt > 0 ? `<span class="month-req-count">${requestCnt}건</span>` : '';
       return `<div class="month-staff-row"
         onclick="event.stopPropagation();openMonthPopup('${sv.id}','${dk}','${escHtml(sv.name)}','${color}')">
         <span class="month-staff-name">${escHtml(sv.name)}</span>
-        <span class="month-staff-count">${items.length}건</span>
+        ${normalBadge}${requestBadge ? `<span class="month-count-sep">/</span>${requestBadge}` : ''}
       </div>`;
     }).join('');
 
