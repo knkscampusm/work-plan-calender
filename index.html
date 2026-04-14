@@ -1042,21 +1042,27 @@ function renderWeek() {
       const key = `${sv.id}_${dk}`;
       const items = todos[key]||[];
       const todosHtml = items.map(t => {
+        const isReq = !!t.isRequest;
         const st = t.status||'none';
-        const itemCls = st==='ing'?'status-ing':st==='done'?'status-done':'';
+        // 요청 상태: req/ing/done, 일반: none/ing/done
+        let itemCls = isReq ? 'req-item' : '';
+        if(st==='ing') itemCls += ' status-ing';
+        else if(st==='done') itemCls += ' status-done';
         const btnCls = `s-${st}`;
-        const btnLbl = st==='ing'?'진행':st==='done'?'완료':'대기';
+        const btnLbl = st==='req'?'요청':st==='ing'?'진행':st==='done'?'완료':'대기';
         const full = escHtml(t.text);
-        const isLong = t.text.length>50;
-        const short = isLong ? escHtml(t.text.slice(0,50))+'<span>…</span>' : full;
+        const isLong = t.text.length>30;
+        const short = isLong ? escHtml(t.text.slice(0,30))+'<span>…</span>' : full;
         const textHtml = isLong
           ? `<span class="todo-text expandable" onclick="startEditTodo('${sv.id}','${dk}','${t.id}')">${short}</span>`
           : `<span class="todo-text" onclick="startEditTodo('${sv.id}','${dk}','${t.id}')">${full}</span>`;
+        const fromTag = isReq ? `<span class="req-from-tag">${escHtml(t.fromName||'')}</span>` : '';
         return `<div class="todo-item ${itemCls}" id="ti-${t.id}" draggable="true"
           ondragstart="onTodoDragStart(event,'${sv.id}','${dk}','${t.id}')"
           ondragend="onTodoDragEnd(event)">
           <button class="status-btn ${btnCls}" onclick="cycleStatus('${sv.id}','${dk}','${t.id}')">${btnLbl}</button>
           ${textHtml}
+          ${fromTag}
           <button class="todo-del" onclick="deleteTodo('${sv.id}','${dk}','${t.id}')">✕</button>
         </div>`;
       }).join('');
@@ -1374,7 +1380,7 @@ async function cycleStatus(staffId, dk, id) {
   const key=`${staffId}_${dk}`;
   const item=(todos[key]||[]).find(t=>t.id===id);
   if(!item) return;
-  const cycle={none:'ing',ing:'done',done:'none'};
+  const cycle={none:'ing',ing:'done',done:'none',req:'ing'};
   item.status=cycle[item.status||'none']||'none';
   if(currentView==='week') render();
   if(db){ try{ await db.ref(`${todoPath(staffId,dk)}/${id}/status`).set(item.status); }catch(e){} }
