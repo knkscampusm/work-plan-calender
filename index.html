@@ -754,19 +754,16 @@ input, textarea { font-family: inherit; }
 }
 
 
-.wh-staff:hover 
-.wh-req-btn:hover { background: rgba(99,102,241,.1); border-color: #6366f1; }
-
 /* ── 업무요청 ── */
+.wh-staff { position: relative; }
 .wh-req-btn {
   width: 18px; height: 18px;
   border: 1px solid var(--border2); border-radius: 4px;
   background: transparent; font-size: 10px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   opacity: 0; transition: all .12s; padding: 0; flex-shrink: 0;
-  margin-left: auto;
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
 }
-.wh-staff { flex-direction: row !important; gap: 6px !important; padding: 8px 10px !important; justify-content: center !important; }
 .wh-staff:hover .wh-req-btn { opacity: 1; }
 .wh-req-btn:hover { background: rgba(99,102,241,.1); border-color: #6366f1; }
 
