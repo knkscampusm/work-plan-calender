@@ -423,11 +423,37 @@ input, textarea { font-family: inherit; }
 /* 주요행사 월뷰 */
 .month-sch-item {
   font-size: 10px; font-weight: 600;
-  padding: 2px 6px; border-radius: 3px;
+  padding: 2px 5px; border-radius: 3px;
   background: rgba(13,148,136,.12);
   color: var(--teal);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; align-items: center; gap: 3px;
   cursor: default;
+}
+.month-sch-text {
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+.month-sch-del {
+  width: 13px; height: 13px; flex-shrink: 0;
+  border: none; background: transparent; color: rgba(13,148,136,.5);
+  font-size: 9px; cursor: pointer; border-radius: 2px;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+  opacity: 0; transition: opacity .1s, color .1s;
+}
+.month-sch-item:hover .month-sch-del { opacity: 1; }
+.month-sch-del:hover { color: var(--red) !important; }
+.month-cell-input-wrap {
+  display: flex; gap: 3px; align-items: center; margin-top: 2px;
+}
+.month-cell-input {
+  flex: 1; min-width: 0;
+  background: var(--white);
+  border: 1.5px solid var(--teal); border-radius: 4px;
+  color: var(--text); font-size: 10px; padding: 3px 6px; outline: none;
+}
+.month-cell-ok {
+  width: 20px; height: 20px; background: var(--teal); border: none;
+  border-radius: 4px; color: #fff; font-size: 11px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;
 }
 
 /* 직원 할일 요약 배지 */
@@ -435,17 +461,18 @@ input, textarea { font-family: inherit; }
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 5px;
+  padding: 2px 6px;
   border-radius: 4px;
   cursor: pointer;
   transition: all .1s;
   flex-shrink: 0;
+  background: #e2e8f0;
 }
-.month-staff-row:hover { filter: brightness(.93); }
+.month-staff-row:hover { background: #cbd5e1; }
 .month-staff-name {
   font-size: 10px;
   font-weight: 700;
-  color: #fff;
+  color: #475569;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -455,8 +482,8 @@ input, textarea { font-family: inherit; }
 .month-staff-count {
   font-size: 9px;
   font-weight: 800;
-  background: rgba(255,255,255,.3);
-  color: #fff;
+  background: rgba(0,0,0,.1);
+  color: #475569;
   padding: 0px 5px;
   border-radius: 10px;
   white-space: nowrap;
@@ -984,12 +1011,12 @@ function renderWeek() {
   const colTpl = `88px repeat(${visibleStaff.length}, 1fr)`;
   document.getElementById('week-hdr').style.gridTemplateColumns = colTpl;
 
-  // 주 헤더 (직원 배지)
+  // 주 헤더 (직원 이름 - 배경색 없음)
   const whdr = document.getElementById('week-hdr');
   whdr.innerHTML = `<div class="wh-spacer">주요행사</div>` +
     visibleStaff.map(s => `
       <div class="wh-staff">
-        <span class="wh-staff-badge" style="background:${s.color||'#0d9488'}">${escHtml(s.name)}</span>
+        <span class="wh-staff-name">${escHtml(s.name)}</span>
       </div>
     `).join('');
 
@@ -1107,7 +1134,10 @@ function renderMonth() {
     // 주요행사
     const schItems = (schedules[dk]||[]);
     const schHtml = schItems.map(sc =>
-      `<div class="month-sch-item" title="${escHtml(sc.text)}">${escHtml(sc.text)}</div>`
+      `<div class="month-sch-item" title="${escHtml(sc.text)}">
+        <span class="month-sch-text">${escHtml(sc.text)}</span>
+        <button class="month-sch-del" onclick="event.stopPropagation();deleteSchedule('${dk}','${sc.id}')">✕</button>
+      </div>`
     ).join('');
 
     // 직원별 할일 요약
@@ -1116,15 +1146,14 @@ function renderMonth() {
       const items = todos[key]||[];
       if(items.length===0) return '';
       const color = sv.color||'#0d9488';
-      return `<div class="month-staff-row" style="background:${color}"
-        onclick="openMonthPopup('${sv.id}','${dk}','${escHtml(sv.name)}','${color}')">
+      return `<div class="month-staff-row"
+        onclick="event.stopPropagation();openMonthPopup('${sv.id}','${dk}','${escHtml(sv.name)}','${color}')">
         <span class="month-staff-name">${escHtml(sv.name)}</span>
         <span class="month-staff-count">${items.length}건</span>
       </div>`;
     }).join('');
 
-    // 할일 없는 직원도 추가 가능하도록 빈 영역 클릭
-    cells += `<div class="month-cell ${cellCls}" id="mc-${dk}">
+    cells += `<div class="month-cell ${cellCls}" id="mc-${dk}" onclick="monthCellClick(event,'${dk}')">
       ${dayNumHtml}
       ${schHtml}
       ${staffRows}
@@ -1160,6 +1189,38 @@ function closeMonthPopup() {
   document.getElementById('month-popup').classList.remove('on');
   _popupCtx = null;
   renderMonth();
+}
+
+function monthCellClick(e, dk) {
+  // 이미 인라인 입력이 열려 있으면 닫기
+  const cell = document.getElementById('mc-' + dk);
+  if(!cell) return;
+  const existing = cell.querySelector('.month-cell-input-wrap');
+  if(existing) { existing.remove(); return; }
+
+  // 다른 셀의 인라인 입력 닫기
+  document.querySelectorAll('.month-cell-input-wrap').forEach(el => el.remove());
+
+  const wrap = document.createElement('div');
+  wrap.className = 'month-cell-input-wrap';
+  wrap.innerHTML = `<input class="month-cell-input" placeholder="주요행사 입력" maxlength="40">
+    <button class="month-cell-ok">↵</button>`;
+  cell.appendChild(wrap);
+
+  const inp = wrap.querySelector('input');
+  inp.focus();
+
+  const save = () => {
+    const v = inp.value.trim();
+    if(v) addSchedule(dk, v);
+    wrap.remove();
+  };
+  inp.addEventListener('keydown', ev => {
+    if(ev.key === 'Enter') { ev.stopPropagation(); save(); }
+    if(ev.key === 'Escape') { ev.stopPropagation(); wrap.remove(); }
+  });
+  wrap.querySelector('button').addEventListener('click', ev => { ev.stopPropagation(); save(); });
+  inp.addEventListener('blur', () => setTimeout(() => { if(!wrap.contains(document.activeElement)) wrap.remove(); }, 150));
 }
 
 function renderPopupBody() {
