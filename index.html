@@ -594,6 +594,9 @@ input, textarea { font-family: inherit; }
 .popup-todo-item:hover { border-color: var(--border2); }
 .popup-todo-item.status-ing { border-color: rgba(251,191,36,.35); background: rgba(251,191,36,.06); }
 .popup-todo-item.status-done { text-decoration: line-through; border-color: rgba(13,148,136,.2); }
+.popup-todo-item.req-item { border-color: rgba(99,102,241,.25); background: rgba(99,102,241,.04); }
+.popup-todo-item.req-item.status-ing { border-color: rgba(251,191,36,.35); background: rgba(251,191,36,.06); }
+.popup-todo-item.req-item.status-done { border-color: rgba(13,148,136,.2); background: rgba(13,148,136,.04); }
 .popup-todo-text { flex: 1; min-width: 0; word-break: break-word; cursor: pointer; }
 .popup-todo-text:hover { color: var(--teal); }
 
@@ -653,7 +656,14 @@ input, textarea { font-family: inherit; }
   padding: 9px 12px; background: var(--bg3);
   border-radius: 8px; border: 1px solid var(--border);
 }
-.staff-list-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.staff-edit-btn {
+  width: 24px; height: 24px;
+  border: 1px solid var(--border); background: transparent;
+  border-radius: 6px; color: var(--text3); font-size: 12px;
+  transition: all .12s; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; padding: 0; cursor: pointer;
+}
+.staff-edit-btn:hover { background: var(--teal-dim); border-color: var(--teal); }
 .staff-list-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--text); }
 .staff-list-del {
   width: 24px; height: 24px; border: 1px solid var(--border);
@@ -756,7 +766,7 @@ input, textarea { font-family: inherit; }
   opacity: 0; transition: all .12s; padding: 0; flex-shrink: 0;
   margin-left: auto;
 }
-.wh-staff { flex-direction: row !important; gap: 6px !important; padding: 8px 10px !important; }
+.wh-staff { flex-direction: row !important; gap: 6px !important; padding: 8px 10px !important; justify-content: center !important; }
 .wh-staff:hover .wh-req-btn { opacity: 1; }
 .wh-req-btn:hover { background: rgba(99,102,241,.1); border-color: #6366f1; }
 
@@ -1379,13 +1389,19 @@ function renderPopupBody() {
   }
 
   body.innerHTML = items.map(t => {
+    const isReq = !!t.isRequest;
     const st = t.status||'none';
-    const itemCls = st==='ing'?'status-ing':st==='done'?'status-done':'';
+    let itemCls = isReq ? 'req-item' : '';
+    if(st==='ing') itemCls += ' status-ing';
+    else if(st==='done') itemCls += ' status-done';
     const btnCls = `s-${st}`;
-    const btnLbl = st==='ing'?'진행':st==='done'?'완료':'대기';
+    const btnLbl = st==='req'?'요청':st==='ing'?'진행':st==='done'?'완료':'대기';
+    const fromTag     = isReq ? `<span class="req-from-tag">${escHtml(t.fromName||'')}</span>` : '';
+    const deadlineTag = (isReq && t.deadline) ? `<span class="req-deadline-tag">${escHtml(t.deadline)}</span>` : '';
     return `<div class="popup-todo-item ${itemCls}" id="pti-${t.id}">
       <button class="status-btn ${btnCls}" onclick="popupCycleStatus('${t.id}')">${btnLbl}</button>
       <span class="popup-todo-text" onclick="popupEditTodo('${t.id}')">${escHtml(t.text)}</span>
+      ${fromTag}${deadlineTag}
       <button class="todo-del" style="opacity:1" onclick="popupDeleteTodo('${t.id}')">✕</button>
     </div>`;
   }).join('');
@@ -1770,17 +1786,58 @@ function renderStaffModal() {
   if(staff.length===0){ sl.innerHTML='<div style="color:var(--text3);font-size:12px;padding:8px 0">아직 직원이 없습니다</div>'; return; }
   sl.innerHTML=staff.map((s,i)=>{
     const isHidden=hiddenStaff.has(s.id);
-    return`<div class="staff-list-item">
+    return`<div class="staff-list-item" id="sli-${s.id}">
       <div class="staff-order-btns">
         <button class="staff-order-btn" onclick="moveStaff('${s.id}',-1)" ${i===0?'disabled':''}>▲</button>
         <button class="staff-order-btn" onclick="moveStaff('${s.id}',1)" ${i===staff.length-1?'disabled':''}>▼</button>
       </div>
-      <div class="staff-list-dot" style="background:${s.color||'#0d9488'}"></div>
-      <span class="staff-list-name" style="${isHidden?'color:var(--text3);text-decoration:line-through':''}">${escHtml(s.name)}</span>
+      <span class="staff-list-name" style="${isHidden?'color:var(--text3);text-decoration:line-through':''}" id="sln-${s.id}">${escHtml(s.name)}</span>
+      <button class="staff-edit-btn" onclick="startRenameStaff('${s.id}')">✏️</button>
       <button class="staff-hide-btn ${isHidden?'hidden-on':''}" onclick="toggleHideStaff('${s.id}')">${isHidden?'표시':'숨김'}</button>
       <button class="staff-list-del" onclick="confirmDelStaff('${s.id}')">✕</button>
     </div>`;
   }).join('');
+}
+
+function startRenameStaff(id) {
+  const item = document.getElementById('sli-' + id);
+  if(!item) return;
+  // 이미 입력 중이면 취소
+  if(item.querySelector('.staff-rename-input')) return;
+
+  const nameEl = document.getElementById('sln-' + id);
+  const oldName = staff.find(s=>s.id===id)?.name || '';
+  const origHtml = nameEl.outerHTML;
+
+  // 이름 텍스트 → 인라인 입력으로 교체
+  const inp = document.createElement('input');
+  inp.className = 'staff-rename-input modal-input';
+  inp.value = oldName;
+  inp.maxLength = 10;
+  inp.style.cssText = 'flex:1;padding:4px 8px;font-size:13px;height:28px;min-width:0';
+  nameEl.replaceWith(inp);
+  inp.focus(); inp.select();
+
+  const save = async () => {
+    const newName = inp.value.trim();
+    if(!newName) { inp.focus(); return; }
+    if(newName === oldName) { renderStaffModal(); return; }
+    if(staff.find(s=>s.name===newName && s.id!==id)) { toast('이미 있는 이름이에요','err'); inp.focus(); return; }
+    const s = staff.find(s=>s.id===id);
+    if(s) s.name = newName;
+    saveStaffLocal();
+    if(db) await db.ref(`staff/${id}/name`).set(newName).catch(()=>{});
+    renderStaffModal();
+    render();
+    toast('이름 변경 완료 ✓','ok');
+  };
+  const cancel = () => renderStaffModal();
+
+  inp.addEventListener('keydown', e => {
+    if(e.key==='Enter') { e.preventDefault(); save(); }
+    if(e.key==='Escape') cancel();
+  });
+  inp.addEventListener('blur', () => setTimeout(cancel, 150));
 }
 
 /* ══════════════════════════════
