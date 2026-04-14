@@ -1187,7 +1187,7 @@ function renderWeek() {
         if(st==='ing') itemCls += ' status-ing';
         else if(st==='done') itemCls += ' status-done';
         const btnCls = `s-${st}`;
-        const btnLbl = st==='req'?'요청':st==='ing'?'진행':st==='done'?'완료':'대기';
+        const btnLbl = isReq ? (st==='ing'?'진행':st==='done'?'완료':'요청') : (st==='ing'?'진행':st==='done'?'완료':'대기');
         const full = escHtml(t.text);
         const isLong = t.text.length>28;
         const short = isLong ? escHtml(t.text.slice(0,28))+'…' : full;
@@ -1390,7 +1390,7 @@ function renderPopupBody() {
     if(st==='ing') itemCls += ' status-ing';
     else if(st==='done') itemCls += ' status-done';
     const btnCls = `s-${st}`;
-    const btnLbl = st==='req'?'요청':st==='ing'?'진행':st==='done'?'완료':'대기';
+    const btnLbl = isReq ? (st==='ing'?'진행':st==='done'?'완료':'요청') : (st==='ing'?'진행':st==='done'?'완료':'대기');
     const fromTag     = isReq ? `<span class="req-from-tag">${escHtml(t.fromName||'')}</span>` : '';
     const deadlineTag = (isReq && t.deadline) ? `<span class="req-deadline-tag">${escHtml(t.deadline)}</span>` : '';
     return `<div class="popup-todo-item ${itemCls}" id="pti-${t.id}">
@@ -1528,7 +1528,10 @@ async function cycleStatus(staffId, dk, id) {
   const key=`${staffId}_${dk}`;
   const item=(todos[key]||[]).find(t=>t.id===id);
   if(!item) return;
-  const cycle={none:'ing',ing:'done',done:'none',req:'ing'};
+  const isReq = !!item.isRequest;
+  const cycle = isReq
+    ? {req:'ing', ing:'done', done:'req'}
+    : {none:'ing', ing:'done', done:'none'};
   item.status=cycle[item.status||'none']||'none';
   if(currentView==='week') render();
   if(db){ try{ await db.ref(`${todoPath(staffId,dk)}/${id}/status`).set(item.status); }catch(e){} }
