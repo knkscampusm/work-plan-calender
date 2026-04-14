@@ -937,8 +937,8 @@ function setView(v) {
   currentView = v;
   document.getElementById('btn-view-month').classList.toggle('active', v==='month');
   document.getElementById('btn-view-week').classList.toggle('active', v==='week');
-  document.getElementById('week-view').style.display = v==='week' ? '' : 'none';
-  document.getElementById('month-view').style.display = v==='month' ? '' : 'none';
+  document.getElementById('week-view').style.display = v==='week' ? 'block' : 'none';
+  document.getElementById('month-view').style.display = v==='month' ? 'block' : 'none';
   render();
 }
 
