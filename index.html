@@ -736,6 +736,91 @@ input, textarea { font-family: inherit; }
   .day-cell { padding: 3px 3px; }
   .todo-item { font-size: 11px; padding: 3px 4px; }
 }
+
+
+.wh-staff:hover 
+.wh-req-btn:hover { background: rgba(99,102,241,.1); border-color: #6366f1; }
+
+/* ── 업무요청 ── */
+.wh-req-btn {
+  width: 18px; height: 18px;
+  border: 1px solid var(--border2); border-radius: 4px;
+  background: transparent; font-size: 10px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: all .12s; padding: 0; flex-shrink: 0;
+}
+.wh-staff:hover .wh-req-btn { opacity: 1; }
+.wh-req-btn:hover { background: rgba(99,102,241,.1); border-color: #6366f1; }
+
+.req-modal { width: 420px !important; }
+.req-field { display: flex; flex-direction: column; gap: 4px; }
+.req-label { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: .05em; }
+.req-val-row { display: flex; align-items: center; gap: 6px; }
+.req-from-badge {
+  font-size: 13px; font-weight: 700; color: var(--text);
+  padding: 8px 12px; background: var(--bg3);
+  border: 1.5px solid var(--border2); border-radius: 8px; flex: 1;
+}
+.req-arrow-txt { font-size: 16px; color: var(--text3); }
+.req-to-badge {
+  font-size: 13px; font-weight: 700;
+  padding: 8px 12px; background: rgba(99,102,241,.08);
+  border: 1.5px solid rgba(99,102,241,.3); border-radius: 8px;
+  color: #6366f1; flex: 1; text-align: center;
+}
+.req-textarea {
+  width: 100%; padding: 9px 12px;
+  background: var(--bg3); border: 1.5px solid var(--border2);
+  border-radius: 8px; color: var(--text); font-size: 13px;
+  font-family: inherit; outline: none; resize: vertical;
+  min-height: 70px; transition: border-color .12s; line-height: 1.6;
+}
+.req-textarea:focus { border-color: var(--teal); }
+.req-date-row { display: flex; align-items: center; gap: 8px; }
+.req-date-input {
+  flex: 1; padding: 8px 10px;
+  background: var(--bg3); border: 1.5px solid var(--border2);
+  border-radius: 8px; color: var(--text); font-size: 12px;
+  font-family: inherit; outline: none; cursor: pointer;
+  transition: border-color .12s; height: 36px;
+}
+.req-date-input:focus { border-color: var(--teal); }
+.req-date-sep { font-size: 12px; color: var(--text3); font-weight: 700; white-space: nowrap; }
+.req-submit-btn {
+  width: 100%; padding: 11px;
+  background: #6366f1; border: none; border-radius: 8px;
+  color: #fff; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: background .12s;
+}
+.req-submit-btn:hover { background: #4f46e5; }
+
+/* 요청 아이템 */
+.todo-item.req-item {
+  border-color: rgba(99,102,241,.25);
+  background: rgba(99,102,241,.04);
+}
+.todo-item.req-item.status-ing {
+  border-color: rgba(251,191,36,.35);
+  background: rgba(251,191,36,.06);
+}
+.todo-item.req-item.status-done {
+  border-color: rgba(13,148,136,.2);
+  background: rgba(13,148,136,.04);
+}
+.status-btn.s-req {
+  background: rgba(99,102,241,.1); color: #6366f1;
+  border: 1px solid rgba(99,102,241,.3);
+}
+.req-from-tag {
+  font-size: 9px; font-weight: 800; color: #6366f1;
+  background: rgba(99,102,241,.1); padding: 1px 5px;
+  border-radius: 8px; white-space: nowrap; flex-shrink: 0;
+  border: 1px solid rgba(99,102,241,.2); align-self: center;
+}
+.req-deadline-tag {
+  font-size: 9px; font-weight: 700; color: var(--text3);
+  white-space: nowrap; flex-shrink: 0; align-self: center;
+}
 </style>
 </head>
 <body>
@@ -795,6 +880,48 @@ input, textarea { font-family: inherit; }
   <div class="em-icon">👥</div>
   <div class="em-text">직원을 추가해주세요</div>
   <div class="em-sub">우측 상단 '직원 관리' 버튼을 눌러 시작하세요</div>
+</div>
+
+<!-- 업무요청 MODAL -->
+<div class="overlay" id="request-modal" onclick="if(event.target===this)closeRequestModal()">
+  <div class="modal req-modal">
+    <div class="modal-hd">
+      📋 업무 요청
+      <button class="modal-close" onclick="closeRequestModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- 요청자 → 수신자 -->
+      <div class="req-field">
+        <div class="req-label">요청자 → 수신자</div>
+        <div class="req-val-row">
+          <select class="modal-input" id="req-from" style="flex:1;padding:8px 10px;font-size:13px;cursor:pointer">
+            <option value="">요청자 선택</option>
+          </select>
+          <span class="req-arrow-txt">→</span>
+          <div class="req-to-badge" id="req-to-badge">-</div>
+        </div>
+      </div>
+
+      <!-- 요청 사항 -->
+      <div class="req-field">
+        <div class="req-label">요청 사항</div>
+        <textarea class="req-textarea" id="req-content" placeholder="요청 내용을 입력하세요" maxlength="100"></textarea>
+      </div>
+
+      <!-- 기간 -->
+      <div class="req-field">
+        <div class="req-label">기간</div>
+        <div class="req-date-row">
+          <input type="date" class="req-date-input" id="req-start-date" title="시작일 (해당 날짜에 표시)">
+          <span class="req-date-sep">완료기한</span>
+          <input type="date" class="req-date-input" id="req-end-date" title="완료기한">
+        </div>
+      </div>
+
+      <button class="req-submit-btn" onclick="submitRequest()">추가</button>
+    </div>
+  </div>
 </div>
 
 <!-- 직원 관리 MODAL -->
@@ -1017,6 +1144,7 @@ function renderWeek() {
     visibleStaff.map(s => `
       <div class="wh-staff">
         <span class="wh-staff-name">${escHtml(s.name)}</span>
+        <button class="wh-req-btn" onclick="openRequestModalTo('${s.id}')" title="업무요청">📋</button>
       </div>
     `).join('');
 
@@ -1044,25 +1172,24 @@ function renderWeek() {
       const todosHtml = items.map(t => {
         const isReq = !!t.isRequest;
         const st = t.status||'none';
-        // 요청 상태: req/ing/done, 일반: none/ing/done
         let itemCls = isReq ? 'req-item' : '';
         if(st==='ing') itemCls += ' status-ing';
         else if(st==='done') itemCls += ' status-done';
         const btnCls = `s-${st}`;
         const btnLbl = st==='req'?'요청':st==='ing'?'진행':st==='done'?'완료':'대기';
         const full = escHtml(t.text);
-        const isLong = t.text.length>30;
-        const short = isLong ? escHtml(t.text.slice(0,30))+'<span>…</span>' : full;
-        const textHtml = isLong
-          ? `<span class="todo-text expandable" onclick="startEditTodo('${sv.id}','${dk}','${t.id}')">${short}</span>`
-          : `<span class="todo-text" onclick="startEditTodo('${sv.id}','${dk}','${t.id}')">${full}</span>`;
-        const fromTag = isReq ? `<span class="req-from-tag">${escHtml(t.fromName||'')}</span>` : '';
+        const isLong = t.text.length>28;
+        const short = isLong ? escHtml(t.text.slice(0,28))+'…' : full;
+        const textHtml = `<span class="todo-text" onclick="startEditTodo('${sv.id}','${dk}','${t.id}')" title="${full}">${short}</span>`;
+        const fromTag     = isReq ? `<span class="req-from-tag">${escHtml(t.fromName||'')}</span>` : '';
+        const deadlineTag = (isReq && t.deadline) ? `<span class="req-deadline-tag">${escHtml(t.deadline)}</span>` : '';
         return `<div class="todo-item ${itemCls}" id="ti-${t.id}" draggable="true"
           ondragstart="onTodoDragStart(event,'${sv.id}','${dk}','${t.id}')"
           ondragend="onTodoDragEnd(event)">
           <button class="status-btn ${btnCls}" onclick="cycleStatus('${sv.id}','${dk}','${t.id}')">${btnLbl}</button>
           ${textHtml}
           ${fromTag}
+          ${deadlineTag}
           <button class="todo-del" onclick="deleteTodo('${sv.id}','${dk}','${t.id}')">✕</button>
         </div>`;
       }).join('');
@@ -1550,6 +1677,83 @@ async function deleteStaff(id) {
 
 function openStaffModal(){ renderStaffModal(); document.getElementById('staff-modal').classList.add('on'); document.getElementById('new-staff-name').focus(); }
 function closeStaffModal(){ document.getElementById('staff-modal').classList.remove('on'); }
+
+/* ══════════════════════════════
+   업무요청 모달
+══════════════════════════════ */
+let _reqToId = '';
+let _reqToName = '';
+
+function openRequestModalTo(toId, toName) {
+  _reqToId   = toId;
+  _reqToName = toName;
+  // 수신자 표시
+  document.getElementById('req-to-badge').textContent = toName;
+  // 요청자 셀렉트 채우기 (수신자 제외)
+  const fromSel = document.getElementById('req-from');
+  fromSel.innerHTML = '<option value="">요청자 선택</option>';
+  staff.forEach(s => {
+    if(s.id !== toId)
+      fromSel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+  });
+  // 날짜 초기값: 오늘
+  const today = new Date();
+  const todayStr = dateKey(today);
+  document.getElementById('req-start-date').value = todayStr;
+  document.getElementById('req-end-date').value   = todayStr;
+  document.getElementById('req-content').value    = '';
+  document.getElementById('request-modal').classList.add('on');
+  setTimeout(() => document.getElementById('req-content').focus(), 80);
+}
+
+function closeRequestModal() {
+  document.getElementById('request-modal').classList.remove('on');
+}
+
+async function submitRequest() {
+  const fromId    = document.getElementById('req-from').value;
+  const content   = document.getElementById('req-content').value.trim();
+  const startDate = document.getElementById('req-start-date').value;
+  const endDate   = document.getElementById('req-end-date').value;
+
+  if(!fromId)    { toast('요청자를 선택하세요','err'); return; }
+  if(!content)   { toast('요청 사항을 입력하세요','err'); return; }
+  if(!startDate) { toast('시작일을 선택하세요','err'); return; }
+  if(!endDate)   { toast('완료기한을 선택하세요','err'); return; }
+
+  const fromStaff = staff.find(s => s.id === fromId);
+  const fromName  = fromStaff ? fromStaff.name : '?';
+
+  // 완료기한 표시용: M/D 형식
+  const [ey, em, ed] = endDate.split('-');
+  const deadlineLabel = `${parseInt(em)}/${parseInt(ed)}까지`;
+
+  // 시작일 하루에만 추가
+  const id   = 'req_' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+  const item = {
+    id,
+    text: content,
+    fromName,
+    deadline: deadlineLabel,
+    status: 'req',
+    isRequest: true
+  };
+
+  const key = `${_reqToId}_${startDate}`;
+  if(!todos[key]) todos[key] = [];
+  todos[key].push(item);
+
+  closeRequestModal();
+  render();
+
+  if(db) {
+    try {
+      await db.ref(`todos/${_reqToId}/${startDate}/${id}`).set(item);
+    } catch(e) { toast('저장 실패','err'); return; }
+  }
+  toast(`업무요청 추가 완료 ✓`, 'ok');
+}
+
 
 function renderStaffModal() {
   const sl=document.getElementById('staff-list-modal');
