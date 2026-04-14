@@ -213,7 +213,7 @@ input, textarea { font-family: inherit; }
 .wh-spacer {
   padding: 10px 6px;
   border-right: 1px solid var(--border);
-  min-width: 88px; width: 88px;
+  min-width: 120px; width: 120px;
   font-size: 10px; font-weight: 700; color: var(--text3);
   display: flex; align-items: center; justify-content: center;
 }
@@ -244,7 +244,7 @@ input, textarea { font-family: inherit; }
   padding: 8px 5px 6px;
   border-right: 1px solid var(--border);
   gap: 3px; min-height: 80px;
-  min-width: 88px; width: 88px;
+  min-width: 120px; width: 120px;
 }
 .day-label-dn { font-size: 10px; font-weight: 700; letter-spacing: .06em; color: var(--text3); text-transform: uppercase; }
 .day-label-dd { font-size: 20px; font-weight: 900; color: var(--text2); font-family: 'DM Mono', monospace; line-height: 1; }
@@ -1147,7 +1147,7 @@ function renderWeek() {
   empty.style.display = 'none';
 
   const visibleStaff = staff.filter(s => !hiddenStaff.has(s.id));
-  const colTpl = `88px repeat(${visibleStaff.length}, 1fr)`;
+  const colTpl = `120px repeat(${visibleStaff.length}, 1fr)`;
   document.getElementById('week-hdr').style.gridTemplateColumns = colTpl;
 
   // 주 헤더 (직원 이름 - 배경색 없음)
