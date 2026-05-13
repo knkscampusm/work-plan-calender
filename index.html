@@ -2023,7 +2023,10 @@ function renderBacklogList() {
   list.innerHTML = items.map(item => `
     <div class="backlog-item" id="bli-${item.id}">
       <span class="backlog-item-text">${escHtml(item.text)}</span>
-      <button class="backlog-move-btn" onclick="openBacklogMoveModal('${staffId}','${item.id}')">→ 주간</button>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">
+        <button class="backlog-move-btn" onclick="openBacklogMoveModal('${staffId}','${item.id}')">→ 주간</button>
+        ${item.createdAt ? `<span style="font-size:9px;color:var(--text3);white-space:nowrap">${item.createdAt} 추가</span>` : ''}
+      </div>
       <button class="backlog-del-btn" onclick="deleteBacklogItem('${staffId}','${item.id}')">✕</button>
     </div>
   `).join('');
