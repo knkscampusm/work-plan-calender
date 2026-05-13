@@ -1117,6 +1117,8 @@ input, textarea { font-family: inherit; }
       <div id="edit-cal-wrap"></div>
       <div class="edit-modal-footer">
         <button class="btn-date-change" id="btn-date-change" onclick="toggleDatePicker()">📅 일정 변경</button>
+        <button onclick="deleteFromEditModal()"
+          style="padding:7px 16px;border:1.5px solid var(--red);border-radius:8px;background:var(--red-dim);color:var(--red);font-size:13px;font-weight:700;cursor:pointer">삭제</button>
         <div style="flex:1"></div>
         <button onclick="closeEditModal()"
           style="padding:7px 16px;border:1.5px solid var(--border2);border-radius:8px;background:var(--white);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer">취소</button>
@@ -1632,6 +1634,14 @@ function startEditTodo(staffId, dk, id) {
   inp.value=item.text;
   document.getElementById('edit-modal').classList.add('on');
   setTimeout(()=>{ inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length); },50);
+}
+
+function deleteFromEditModal() {
+  if(!_editCtx) return;
+  const {staffId, dk, id} = _editCtx;
+  closeEditModal();
+  deleteTodo(staffId, dk, id);
+  toast('삭제됨', 'ok');
 }
 
 function closeEditModal() {
