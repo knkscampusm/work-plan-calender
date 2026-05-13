@@ -917,7 +917,7 @@ input, textarea { font-family: inherit; }
 }
 .backlog-add-btn:hover { background: #d97706; }
 
-/* 날짜 선택 드롭다운 (백로그 → 주간 이동) */
+/* 날짜 선택 드롭다운 (백로그 → 할일 등록 이동) */
 .backlog-move-modal { width: 340px !important; }
 .backlog-move-date {
   width: 100%; padding: 9px 12px;
@@ -1038,7 +1038,7 @@ input, textarea { font-family: inherit; }
 <div class="overlay" id="backlog-modal" onclick="if(event.target===this)closeBacklogModal()">
   <div class="modal backlog-modal">
     <div class="modal-hd">
-      📥 <span id="backlog-modal-title">백로그</span>
+      🥕 <span id="backlog-modal-title">백로그</span>
       <button class="modal-close" onclick="closeBacklogModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -1294,7 +1294,7 @@ function renderWeek() {
       const bl = backlogs[s.id] || [];
       const blCount = bl.length;
       const blBtn = blCount === 0
-        ? `<button class="wh-backlog-btn empty" onclick="openBacklogModal('${s.id}','${escHtml(s.name)}')" title="백로그">📥</button>`
+        ? `<button class="wh-backlog-btn empty" onclick="openBacklogModal('${s.id}','${escHtml(s.name)}')" title="백로그">🥕</button>`
         : `<button class="wh-backlog-btn has-items" onclick="openBacklogModal('${s.id}','${escHtml(s.name)}')" title="백로그 ${blCount}건">${blCount}</button>`;
       return `
       <div class="wh-staff">
@@ -2024,7 +2024,7 @@ function renderBacklogList() {
     <div class="backlog-item" id="bli-${item.id}">
       <span class="backlog-item-text">${escHtml(item.text)}</span>
       <div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0">
-        <button class="backlog-move-btn" onclick="openBacklogMoveModal('${staffId}','${item.id}')">→ 주간</button>
+        <button class="backlog-move-btn" onclick="openBacklogMoveModal('${staffId}','${item.id}')">→ 할일 등록</button>
         ${item.createdAt ? `<span style="font-size:9px;color:var(--text3);white-space:nowrap">${item.createdAt} 추가</span>` : ''}
       </div>
       <button class="backlog-del-btn" onclick="deleteBacklogItem('${staffId}','${item.id}')">✕</button>
