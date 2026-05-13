@@ -2036,7 +2036,9 @@ async function addBacklogItem() {
   if(!text) return;
   const { staffId } = _backlogCtx;
   const id = 'bl_' + Date.now().toString(36) + Math.random().toString(36).slice(2,4);
-  const item = { id, text };
+  const now = new Date();
+  const createdAt = `${now.getMonth()+1}/${now.getDate()}`;
+  const item = { id, text, createdAt };
   if(!backlogs[staffId]) backlogs[staffId] = [];
   backlogs[staffId].push(item);
   inp.value = '';
