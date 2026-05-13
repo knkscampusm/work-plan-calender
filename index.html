@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>의대관 주간 업무 리스트</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d9488">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="의대관 업무">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -835,6 +840,98 @@ input, textarea { font-family: inherit; }
   font-size: 9px; font-weight: 700; color: var(--text3);
   white-space: nowrap; flex-shrink: 0; align-self: center;
 }
+
+/* ── 백로그 ── */
+.wh-backlog-btn {
+  font-size: 11px; cursor: pointer;
+  border: none; background: transparent;
+  padding: 0 2px; flex-shrink: 0;
+  line-height: 1; transition: opacity .12s;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+/* 건수 0: 이모지, 호버 시만 표시 */
+.wh-backlog-btn.empty {
+  opacity: 0;
+  width: 16px; height: 16px;
+}
+.wh-staff:hover .wh-backlog-btn.empty { opacity: 0.6; }
+.wh-backlog-btn.empty:hover { opacity: 1 !important; }
+
+/* 건수 1이상: 숫자 뱃지 */
+.wh-backlog-btn.has-items {
+  opacity: 1;
+  background: rgba(245,158,11,.15);
+  border: 1px solid rgba(245,158,11,.35) !important;
+  border-radius: 10px;
+  font-size: 10px; font-weight: 800;
+  color: #d97706;
+  padding: 1px 6px;
+  height: auto; width: auto;
+  min-width: 18px;
+}
+.wh-backlog-btn.has-items:hover { background: rgba(245,158,11,.25); }
+
+/* 백로그 모달 */
+.backlog-modal { width: 420px !important; }
+.backlog-list { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; }
+.backlog-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; background: var(--bg3);
+  border-radius: 8px; border: 1px solid var(--border);
+  font-size: 13px; font-weight: 500; color: var(--text);
+  transition: all .12s;
+}
+.backlog-item:hover { border-color: var(--border2); }
+.backlog-item-text { flex: 1; min-width: 0; word-break: break-word; cursor: pointer; }
+.backlog-item-text:hover { color: var(--teal); }
+.backlog-move-btn {
+  padding: 3px 10px; border: 1px solid var(--teal);
+  border-radius: 6px; background: var(--teal-dim);
+  color: var(--teal); font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: all .12s; white-space: nowrap; flex-shrink: 0;
+}
+.backlog-move-btn:hover { background: var(--teal); color: #fff; }
+.backlog-del-btn {
+  width: 22px; height: 22px; border: 1px solid var(--border);
+  background: transparent; border-radius: 6px;
+  color: var(--text3); font-size: 11px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s; flex-shrink: 0;
+}
+.backlog-del-btn:hover { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+.backlog-add-row {
+  display: flex; gap: 8px; padding-top: 4px;
+  border-top: 1px solid var(--border); margin-top: 4px;
+}
+.backlog-add-input {
+  flex: 1; padding: 8px 12px;
+  background: var(--bg3); border: 1.5px solid var(--border2);
+  border-radius: 8px; color: var(--text); font-size: 13px;
+  outline: none; transition: border-color .12s;
+}
+.backlog-add-input:focus { border-color: #f59e0b; }
+.backlog-add-btn {
+  padding: 8px 16px; background: #f59e0b; color: #fff;
+  border: none; border-radius: 8px; font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: background .12s; white-space: nowrap;
+}
+.backlog-add-btn:hover { background: #d97706; }
+
+/* 날짜 선택 드롭다운 (백로그 → 주간 이동) */
+.backlog-move-modal { width: 340px !important; }
+.backlog-move-date {
+  width: 100%; padding: 9px 12px;
+  background: var(--bg3); border: 1.5px solid var(--border2);
+  border-radius: 8px; color: var(--text); font-size: 13px;
+  outline: none; cursor: pointer; transition: border-color .12s; height: 40px;
+}
+.backlog-move-date:focus { border-color: var(--teal); }
+.backlog-move-confirm {
+  width: 100%; padding: 11px; background: var(--teal);
+  border: none; border-radius: 8px; color: #fff;
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: background .12s;
+}
+.backlog-move-confirm:hover { background: #0f766e; }
 </style>
 </head>
 <body>
@@ -932,6 +1029,41 @@ input, textarea { font-family: inherit; }
       </div>
 
       <button class="req-submit-btn" onclick="submitRequest()">추가</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- 백로그 MODAL -->
+<div class="overlay" id="backlog-modal" onclick="if(event.target===this)closeBacklogModal()">
+  <div class="modal backlog-modal">
+    <div class="modal-hd">
+      📥 <span id="backlog-modal-title">백로그</span>
+      <button class="modal-close" onclick="closeBacklogModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="backlog-list" id="backlog-list"></div>
+      <div class="backlog-add-row">
+        <input class="backlog-add-input" id="backlog-add-input" placeholder="백로그 항목 추가..." maxlength="80"
+          onkeydown="if(event.key==='Enter')addBacklogItem()">
+        <button class="backlog-add-btn" onclick="addBacklogItem()">추가</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 백로그 날짜 이동 MODAL -->
+<div class="overlay" id="backlog-move-modal" onclick="if(event.target===this)closeBacklogMoveModal()">
+  <div class="modal backlog-move-modal">
+    <div class="modal-hd">
+      📅 주간으로 이동
+      <button class="modal-close" onclick="closeBacklogMoveModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:4px" id="backlog-move-label"></div>
+      <input type="date" class="backlog-move-date" id="backlog-move-date">
+      <div style="height:8px"></div>
+      <button class="backlog-move-confirm" onclick="confirmBacklogMove()">이동</button>
     </div>
   </div>
 </div>
@@ -1053,6 +1185,9 @@ let _calOpen = false;
 
 // 팝업 컨텍스트
 let _popupCtx = null; // { staffId, dk }
+let backlogs = {}; // key: staffId → [{id, text}]
+let _backlogCtx = null; // { staffId, name }
+let _backlogMoveCtx = null; // { staffId, itemId }
 
 /* ══════════════════════════════
    Firebase 초기화
@@ -1153,11 +1288,18 @@ function renderWeek() {
   // 주 헤더 (직원 이름 - 배경색 없음)
   const whdr = document.getElementById('week-hdr');
   whdr.innerHTML = `<div class="wh-spacer">주요행사</div>` +
-    visibleStaff.map(s => `
+    visibleStaff.map(s => {
+      const bl = backlogs[s.id] || [];
+      const blCount = bl.length;
+      const blBtn = blCount === 0
+        ? `<button class="wh-backlog-btn empty" onclick="openBacklogModal('${s.id}','${escHtml(s.name)}')" title="백로그">📥</button>`
+        : `<button class="wh-backlog-btn has-items" onclick="openBacklogModal('${s.id}','${escHtml(s.name)}')" title="백로그 ${blCount}건">${blCount}</button>`;
+      return `
       <div class="wh-staff">
-        <button class="wh-req-btn" onclick="openRequestModalTo('${s.id}','${escHtml(s.name)}')" title="업무요청">📋</button><span class="wh-staff-name">${escHtml(s.name)}</span>
+        <button class="wh-req-btn" onclick="openRequestModalTo('${s.id}','${escHtml(s.name)}')" title="업무요청">📋</button><span class="wh-staff-name">${escHtml(s.name)}</span>${blBtn}
       </div>
-    `).join('');
+    `;
+    }).join('');
 
   grid.innerHTML = dates.map(d => {
     const dk = dateKey(d);
@@ -1838,6 +1980,110 @@ function startRenameStaff(id) {
   inp.addEventListener('blur', () => setTimeout(cancel, 150));
 }
 
+
+/* ══════════════════════════════
+   백로그
+══════════════════════════════ */
+function openBacklogModal(staffId, staffName) {
+  _backlogCtx = { staffId, staffName };
+  document.getElementById('backlog-modal-title').textContent = staffName + ' 백로그';
+  document.getElementById('backlog-add-input').value = '';
+  renderBacklogList();
+  document.getElementById('backlog-modal').classList.add('on');
+  setTimeout(() => document.getElementById('backlog-add-input').focus(), 80);
+}
+
+function closeBacklogModal() {
+  document.getElementById('backlog-modal').classList.remove('on');
+  _backlogCtx = null;
+  render(); // 헤더 뱃지 갱신
+}
+
+function renderBacklogList() {
+  if(!_backlogCtx) return;
+  const { staffId } = _backlogCtx;
+  const items = backlogs[staffId] || [];
+  const list = document.getElementById('backlog-list');
+
+  if(items.length === 0) {
+    list.innerHTML = `<div style="color:var(--text3);font-size:13px;padding:8px 0;text-align:center">백로그가 없습니다</div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(item => `
+    <div class="backlog-item" id="bli-${item.id}">
+      <span class="backlog-item-text">${escHtml(item.text)}</span>
+      <button class="backlog-move-btn" onclick="openBacklogMoveModal('${staffId}','${item.id}')">→ 주간</button>
+      <button class="backlog-del-btn" onclick="deleteBacklogItem('${staffId}','${item.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+async function addBacklogItem() {
+  if(!_backlogCtx) return;
+  const inp = document.getElementById('backlog-add-input');
+  const text = inp.value.trim();
+  if(!text) return;
+  const { staffId } = _backlogCtx;
+  const id = 'bl_' + Date.now().toString(36) + Math.random().toString(36).slice(2,4);
+  const item = { id, text };
+  if(!backlogs[staffId]) backlogs[staffId] = [];
+  backlogs[staffId].push(item);
+  inp.value = '';
+  renderBacklogList();
+  if(db) await db.ref(`backlogs/${staffId}/${id}`).set(item).catch(()=>{});
+}
+
+async function deleteBacklogItem(staffId, id) {
+  backlogs[staffId] = (backlogs[staffId]||[]).filter(i => i.id !== id);
+  renderBacklogList();
+  if(db) await db.ref(`backlogs/${staffId}/${id}`).remove().catch(()=>{});
+}
+
+function openBacklogMoveModal(staffId, itemId) {
+  const item = (backlogs[staffId]||[]).find(i => i.id === itemId);
+  if(!item) return;
+  _backlogMoveCtx = { staffId, itemId };
+  document.getElementById('backlog-move-label').textContent = '「' + item.text + '」을(를) 이동할 날짜 선택';
+  const today = new Date();
+  document.getElementById('backlog-move-date').value = dateKey(today);
+  document.getElementById('backlog-move-modal').classList.add('on');
+}
+
+function closeBacklogMoveModal() {
+  document.getElementById('backlog-move-modal').classList.remove('on');
+  _backlogMoveCtx = null;
+}
+
+async function confirmBacklogMove() {
+  if(!_backlogMoveCtx) return;
+  const { staffId, itemId } = _backlogMoveCtx;
+  const dk = document.getElementById('backlog-move-date').value;
+  if(!dk) { toast('날짜를 선택하세요','err'); return; }
+
+  const items = backlogs[staffId]||[];
+  const idx = items.findIndex(i => i.id === itemId);
+  if(idx < 0) return;
+  const [bl] = items.splice(idx, 1);
+
+  // 주간 할일로 추가
+  const todoId = Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+  const todo = { id: todoId, text: bl.text, status: 'none' };
+  const key = `${staffId}_${dk}`;
+  if(!todos[key]) todos[key] = [];
+  todos[key].push(todo);
+
+  closeBacklogMoveModal();
+  closeBacklogModal();
+
+  if(db) {
+    await db.ref(`backlogs/${staffId}/${itemId}`).remove().catch(()=>{});
+    await db.ref(`todos/${staffId}/${dk}/${todoId}`).set(todo).catch(()=>{});
+  }
+
+  goToDate(dk);
+  toast(`${formatDkDisplay(dk)}으로 이동됨 ✓`, 'ok');
+}
 /* ══════════════════════════════
    Firebase 리스닝
 ══════════════════════════════ */
@@ -1862,6 +2108,14 @@ function startListening() {
       for(const[dk,items] of Object.entries(days)){
         todos[`${staffId}_${dk}`]=Object.values(items);
       }
+    }
+    render();
+  });
+
+  db.ref('backlogs').on('value',snap=>{
+    const val=snap.val()||{}; backlogs={};
+    for(const[staffId,items] of Object.entries(val)){
+      backlogs[staffId]=Object.values(items);
     }
     render();
   });
@@ -1926,7 +2180,7 @@ function closeTextModal(){ document.getElementById('text-modal').classList.remov
 
 window.addEventListener('resize',()=>{ if(currentView==='week'){ const hdrH=document.getElementById('hdr').offsetHeight; document.getElementById('week-hdr').style.top=hdrH+'px'; } });
 
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeStaffModal(); closeTextModal(); closeSearchResults(); closeEditModal(); closeMonthPopup(); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeStaffModal(); closeTextModal(); closeSearchResults(); closeEditModal(); closeMonthPopup(); closeBacklogModal(); closeBacklogMoveModal(); } });
 document.addEventListener('click',e=>{ const sr=document.getElementById('search-results'); if(sr&&!e.target.closest('.search-wrap')) closeSearchResults(); });
 
 /* ══════════════════════════════
@@ -1945,6 +2199,16 @@ window.onload=()=>{
   if(ok){ startListening(); setTimeout(scrollToToday,800); }
   else{ render(); setTimeout(scrollToToday,200); }
 };
+</script>
+
+<script>
+if('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(r => console.log('SW registered'))
+      .catch(e => console.log('SW failed:', e));
+  });
+}
 </script>
 </body>
 </html>
