@@ -2201,13 +2201,22 @@ document.addEventListener('click',e=>{ const sr=document.getElementById('search-
 /* ══════════════════════════════
    INIT
 ══════════════════════════════ */
-const DEFAULT_ORDER=['김리아','이동현','강보름','김수빈','조병일'];
+const DEFAULT_ORDER=['이동현','강보름','조병일','정소라','김리아','김수빈'];
+const DEFAULT_HIDDEN=['김리아','김수빈'];
 
 window.onload=()=>{
   loadStaffLocal();
   if(staff.length>1){
     const hasOrder=localStorage.getItem('quetta_staff');
     if(!hasOrder){ staff.sort((a,b)=>{ const ai=DEFAULT_ORDER.findIndex(n=>a.name.includes(n)); const bi=DEFAULT_ORDER.findIndex(n=>b.name.includes(n)); return(ai<0?99:ai)-(bi<0?99:bi); }); saveStaffLocal(); }
+  }
+  // 최초 접속 시 기본 숨김 처리
+  if(!localStorage.getItem('quetta_hidden_init')) {
+    staff.forEach(s => {
+      if(DEFAULT_HIDDEN.some(n => s.name.includes(n))) hiddenStaff.add(s.id);
+    });
+    saveHiddenLocal();
+    localStorage.setItem('quetta_hidden_init','1');
   }
   setView('week');
   const ok=initFirebase();
