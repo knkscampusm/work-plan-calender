@@ -325,7 +325,10 @@ input, textarea { font-family: inherit; }
 .status-btn.s-none:hover { color: var(--amber); border-color: var(--amber); }
 .status-btn.s-ing { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(251,191,36,.4); }
 .status-btn.s-done { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(45,212,191,.4); }
-.todo-text { flex: 1; min-width: 0; word-break: break-all; cursor: pointer; }
+.todo-text {
+  flex: 1; min-width: 0; word-break: break-all; cursor: pointer;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
 .todo-text.expandable { cursor: pointer; }
 .todo-text.expandable:hover { color: var(--teal); }
 .todo-del {
@@ -737,6 +740,8 @@ input, textarea { font-family: inherit; }
 #toast.on { transform: translateX(-50%) translateY(0); }
 #toast.ok { border-color: var(--teal); color: var(--teal); }
 #toast.err { border-color: var(--red); color: var(--red); }
+.toast-undo { margin-left: 12px; padding: 3px 10px; border: none; border-radius: 6px; background: var(--teal); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
+.toast-undo:hover { background: #0f766e; }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -1333,9 +1338,7 @@ function renderWeek() {
         const btnCls = `s-${st}`;
         const btnLbl = isReq ? (st==='ing'?'진행':st==='done'?'완료':'요청') : (st==='ing'?'진행':st==='done'?'완료':'대기');
         const full = escHtml(t.text);
-        const isLong = t.text.length>28;
-        const short = isLong ? escHtml(t.text.slice(0,28))+'…' : full;
-        const textHtml = `<span class="todo-text" onclick="startEditTodo('${sv.id}','${dk}','${t.id}')" title="${full}">${short}</span>`;
+        const textHtml = `<span class="todo-text" onclick="startEditTodo('${sv.id}','${dk}','${t.id}')" title="${full}">${full}</span>`;
         const fromTag     = isReq ? `<span class="req-from-tag">${escHtml(t.fromName||'')}</span>` : '';
         const deadlineTag = (isReq && t.deadline) ? `<span class="req-deadline-tag">${escHtml(t.deadline)}</span>` : '';
         return `<div class="todo-item ${itemCls}" id="ti-${t.id}" draggable="true"
@@ -1616,9 +1619,21 @@ async function addTodo(staffId, dk, text) {
 
 async function deleteTodo(staffId, dk, id) {
   const key=`${staffId}_${dk}`;
-  todos[key]=(todos[key]||[]).filter(t=>t.id!==id);
+  const list=todos[key]||[];
+  const idx=list.findIndex(t=>t.id===id);
+  if(idx<0) return;
+  const removed={...list[idx]};
+  todos[key]=list.filter(t=>t.id!==id);
   if(currentView==='week') render();
   if(db) { try { await db.ref(`${todoPath(staffId,dk)}/${id}`).remove(); } catch(e){} }
+  toastUndo('삭제됨', async ()=>{
+    if(!todos[key]) todos[key]=[];
+    if(!todos[key].find(t=>t.id===removed.id)) todos[key].splice(Math.min(idx,todos[key].length),0,removed);
+    render();
+    if(_popupCtx) renderPopupBody();
+    if(db) { try { await db.ref(`${todoPath(staffId,dk)}/${removed.id}`).set(removed); } catch(e){ toast('복구 실패','err'); return; } }
+    toast('복구됨 ✓','ok');
+  });
 }
 
 function startEditTodo(staffId, dk, id) {
@@ -1641,7 +1656,6 @@ function deleteFromEditModal() {
   const {staffId, dk, id} = _editCtx;
   closeEditModal();
   deleteTodo(staffId, dk, id);
-  toast('삭제됨', 'ok');
 }
 
 function closeEditModal() {
@@ -1775,7 +1789,7 @@ async function onCellDrop(e,toStaffId,toDk){
   const[item]=fromList.splice(idx,1);
   if(!todos[toKey]) todos[toKey]=[];
   todos[toKey].push(item);
-  render(); scrollToToday();
+  render();
   if(db){ try{ await db.ref(`${todoPath(fromStaffId,fromDk)}/${id}`).remove(); await db.ref(`${todoPath(toStaffId,toDk)}/${id}`).set(item); }catch(e){toast('이동 중 오류','err');} }
   toast('이동 완료 ✓','ok');
 }
@@ -1817,7 +1831,15 @@ async function deleteSchedule(dk, id) {
    직원 관리
 ══════════════════════════════ */
 function saveStaffLocal(){ try{ localStorage.setItem('quetta_staff',JSON.stringify(staff)); }catch(e){} }
-function moveStaff(id,dir){ const i=staff.findIndex(s=>s.id===id); if(i<0) return; const j=i+dir; if(j<0||j>=staff.length) return; [staff[i],staff[j]]=[staff[j],staff[i]]; saveStaffLocal(); if(db) db.ref('staff').set(Object.fromEntries(staff.map(s=>[s.id,s]))).catch(()=>{}); renderStaffModal(); render(); }
+function moveStaff(id,dir){
+  const i=staff.findIndex(s=>s.id===id); if(i<0) return;
+  const j=i+dir; if(j<0||j>=staff.length) return;
+  [staff[i],staff[j]]=[staff[j],staff[i]];
+  staff.forEach((s,k)=>{ s.order=k; });
+  saveStaffLocal();
+  if(db){ const upd={}; staff.forEach(s=>{ upd[`${s.id}/order`]=s.order; }); db.ref('staff').update(upd).catch(()=>{}); }
+  renderStaffModal(); render();
+}
 function saveHiddenLocal(){ try{ localStorage.setItem('quetta_hidden',JSON.stringify([...hiddenStaff])); }catch(e){} }
 function toggleHideStaff(id){ if(hiddenStaff.has(id)) hiddenStaff.delete(id); else hiddenStaff.add(id); saveHiddenLocal(); renderStaffModal(); render(); }
 function loadStaffLocal(){ try{ const d=localStorage.getItem('quetta_staff'); if(d) staff=JSON.parse(d); }catch(e){} }
@@ -1831,7 +1853,8 @@ async function addStaff() {
   // 색상 자동 배정
   const usedColors=staff.map(s=>s.color);
   const nextColor=COLORS.find(c=>!usedColors.includes(c))||COLORS[staff.length%COLORS.length];
-  const member={id,name,color:nextColor};
+  const maxOrder=staff.reduce((m,s)=>Math.max(m,typeof s.order==='number'?s.order:-1),-1);
+  const member={id,name,color:nextColor,order:maxOrder+1};
   staff.push(member); saveStaffLocal();
   if(db){ try{ await db.ref(`staff/${id}`).set(member); }catch(e){toast('저장 실패','err');} }
   inp.value=''; renderStaffModal(); render(); toast(`${name} 추가됨`,'ok');
@@ -2109,7 +2132,12 @@ function startListening() {
     const fbStaff=Object.values(val);
     const saved=JSON.parse(localStorage.getItem('quetta_staff')||'[]');
     const savedIds=saved.map(s=>s.id);
-    const ordered=[...saved.filter(s=>fbStaff.find(f=>f.id===s.id)).map(s=>fbStaff.find(f=>f.id===s.id)||s),...fbStaff.filter(f=>!savedIds.includes(f.id))];
+    let ordered;
+    if(fbStaff.length && fbStaff.every(f=>typeof f.order==='number')){
+      ordered=[...fbStaff].sort((a,b)=>a.order-b.order);
+    } else {
+      ordered=[...saved.filter(s=>fbStaff.find(f=>f.id===s.id)).map(s=>fbStaff.find(f=>f.id===s.id)||s),...fbStaff.filter(f=>!savedIds.includes(f.id))];
+    }
     staff=ordered; saveStaffLocal(); render(); renderStaffModal();
   });
   db.ref('schedules').on('value',snap=>{
@@ -2189,6 +2217,14 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
 
 let _tt;
 function toast(msg,type=''){ const el=document.getElementById('toast'); el.textContent=msg; el.className=`toast on ${type}`; clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('on'),2500); }
+function toastUndo(msg, onUndo){
+  const el=document.getElementById('toast');
+  el.innerHTML=`${escHtml(msg)}<button class="toast-undo">되돌리기</button>`;
+  el.className='toast on';
+  let used=false;
+  el.querySelector('.toast-undo').onclick=()=>{ if(used) return; used=true; clearTimeout(_tt); el.classList.remove('on'); onUndo(); };
+  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('on'),5000);
+}
 
 function openTextModal(text){ document.getElementById('text-modal-body').textContent=text; document.getElementById('text-modal').classList.add('on'); }
 function closeTextModal(){ document.getElementById('text-modal').classList.remove('on'); }
