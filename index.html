@@ -1836,9 +1836,7 @@ function moveStaff(id,dir){
   const i=staff.findIndex(s=>s.id===id); if(i<0) return;
   const j=i+dir; if(j<0||j>=staff.length) return;
   [staff[i],staff[j]]=[staff[j],staff[i]];
-  staff.forEach((s,k)=>{ s.order=k; });
-  saveStaffLocal();
-  if(db){ const upd={}; staff.forEach(s=>{ upd[`${s.id}/order`]=s.order; }); db.ref('staff').update(upd).catch(()=>{}); }
+  saveStaffLocal(); // 순서는 이 PC에만 저장
   renderStaffModal(); render();
 }
 function saveHiddenLocal(){ try{ localStorage.setItem('quetta_hidden',JSON.stringify([...hiddenStaff])); }catch(e){} }
@@ -1854,8 +1852,7 @@ async function addStaff() {
   // 색상 자동 배정
   const usedColors=staff.map(s=>s.color);
   const nextColor=COLORS.find(c=>!usedColors.includes(c))||COLORS[staff.length%COLORS.length];
-  const maxOrder=staff.reduce((m,s)=>Math.max(m,typeof s.order==='number'?s.order:-1),-1);
-  const member={id,name,color:nextColor,order:maxOrder+1};
+  const member={id,name,color:nextColor};
   staff.push(member); saveStaffLocal();
   if(db){ try{ await db.ref(`staff/${id}`).set(member); }catch(e){toast('저장 실패','err');} }
   inp.value=''; renderStaffModal(); render(); toast(`${name} 추가됨`,'ok');
@@ -2133,11 +2130,18 @@ function startListening() {
     const fbStaff=Object.values(val);
     const saved=JSON.parse(localStorage.getItem('quetta_staff')||'[]');
     const savedIds=saved.map(s=>s.id);
+    // 순서는 PC별(localStorage) 기준. 처음 접속이면 기본 순서로 정렬
     let ordered;
-    if(fbStaff.length && fbStaff.every(f=>typeof f.order==='number')){
-      ordered=[...fbStaff].sort((a,b)=>a.order-b.order);
+    if(saved.length){
+      ordered=[...saved.filter(s=>fbStaff.find(f=>f.id===s.id)).map(s=>fbStaff.find(f=>f.id===s.id)),...fbStaff.filter(f=>!savedIds.includes(f.id))];
     } else {
-      ordered=[...saved.filter(s=>fbStaff.find(f=>f.id===s.id)).map(s=>fbStaff.find(f=>f.id===s.id)||s),...fbStaff.filter(f=>!savedIds.includes(f.id))];
+      const rank=n=>{ const k=DEFAULT_ORDER.findIndex(d=>n.includes(d)); return k<0?99:k; };
+      ordered=[...fbStaff].sort((a,b)=>rank(a.name)-rank(b.name));
+    }
+    // 처음 접속 시 기본 숨김
+    if(!localStorage.getItem('quetta_hidden_init') && ordered.length){
+      ordered.forEach(s=>{ if(DEFAULT_HIDDEN.some(n=>s.name.includes(n))) hiddenStaff.add(s.id); });
+      saveHiddenLocal(); localStorage.setItem('quetta_hidden_init','1');
     }
     staff=ordered; saveStaffLocal(); render(); renderStaffModal();
   });
@@ -2250,7 +2254,7 @@ window.onload=()=>{
     if(!hasOrder){ staff.sort((a,b)=>{ const ai=DEFAULT_ORDER.findIndex(n=>a.name.includes(n)); const bi=DEFAULT_ORDER.findIndex(n=>b.name.includes(n)); return(ai<0?99:ai)-(bi<0?99:bi); }); saveStaffLocal(); }
   }
   // 최초 접속 시 기본 숨김 처리
-  if(!localStorage.getItem('quetta_hidden_init')) {
+  if(!localStorage.getItem('quetta_hidden_init') && staff.length) {
     staff.forEach(s => {
       if(DEFAULT_HIDDEN.some(n => s.name.includes(n))) hiddenStaff.add(s.id);
     });
