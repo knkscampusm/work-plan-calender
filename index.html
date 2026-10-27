@@ -1300,6 +1300,28 @@ function markLoaded(k) {
   _loaded[k] = true;
 }
 
+// 마지막으로 받은 데이터를 이 PC에 저장해 두고, 다음에 열 때 먼저 보여줌
+const CACHE_KEY = 'quetta_cache_v1';
+let _cacheTimer;
+function saveCache() {
+  clearTimeout(_cacheTimer);
+  _cacheTimer = setTimeout(() => {
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ schedules, todos, backlogs })); }
+    catch(e) { try { localStorage.removeItem(CACHE_KEY); } catch(_){} }
+  }, 1000);
+}
+function loadCache() {
+  try {
+    const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if(!c || !staff.length) return false;
+    schedules = c.schedules || {};
+    todos = c.todos || {};
+    backlogs = c.backlogs || {};
+    Object.keys(_loaded).forEach(k => _loaded[k] = true);
+    return true;
+  } catch(e) { return false; }
+}
+
 /* ══════════════════════════════
    WEEK VIEW 렌더
 ══════════════════════════════ */
@@ -2176,7 +2198,7 @@ function startListening() {
   db.ref('schedules').on('value',snap=>{
     const val=snap.val()||{}; schedules={};
     for(const[dk,items] of Object.entries(val)) schedules[dk]=Object.values(items);
-    markLoaded('schedules'); render();
+    markLoaded('schedules'); saveCache(); render();
   });
   db.ref('todos').on('value',snap=>{
     const val=snap.val()||{}; todos={};
@@ -2185,7 +2207,7 @@ function startListening() {
         todos[`${staffId}_${dk}`]=Object.values(items);
       }
     }
-    markLoaded('todos'); render();
+    markLoaded('todos'); saveCache(); render();
   });
 
   db.ref('backlogs').on('value',snap=>{
@@ -2193,7 +2215,7 @@ function startListening() {
     for(const[staffId,items] of Object.entries(val)){
       backlogs[staffId]=Object.values(items);
     }
-    markLoaded('backlogs'); render();
+    markLoaded('backlogs'); saveCache(); render();
   });
 }
 
@@ -2293,7 +2315,7 @@ window.onload=()=>{
   }
   setView('week');
   const ok=initFirebase();
-  if(ok){ startListening(); setTimeout(()=>{ Object.keys(_loaded).forEach(k=>_loaded[k]=true); render(); }, 5000); }
+  if(ok){ loadCache(); render(); startListening(); setTimeout(()=>{ Object.keys(_loaded).forEach(k=>_loaded[k]=true); render(); }, 5000); }
   else{ render(); setTimeout(scrollToToday,200); }
 };
 </script>
