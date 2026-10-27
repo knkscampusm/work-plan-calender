@@ -240,7 +240,7 @@ input, textarea { font-family: inherit; }
 #grid { display: flex; flex-direction: column; }
 .day-row {
   display: grid; border-bottom: 1px solid var(--border);
-  min-height: 80px; animation: fadeIn .2s ease;
+  min-height: 80px;
 }
 @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
 
@@ -1267,9 +1267,37 @@ function goToday() {
 /* ══════════════════════════════
    메인 렌더
 ══════════════════════════════ */
+// 여러 데이터가 연달아 도착해도 화면은 한 프레임에 한 번만 그림
+let _renderQueued = false;
+const _loaded = { staff:false, schedules:false, todos:false, backlogs:false };
+let _firstShown = false;
+function isAllLoaded(){ return !db || Object.values(_loaded).every(Boolean); }
+
 function render() {
-  if(currentView === 'week') renderWeek();
-  else renderMonth();
+  if(_renderQueued) return;
+  _renderQueued = true;
+  requestAnimationFrame(() => {
+    _renderQueued = false;
+    if(!isAllLoaded()) { showLoading(); return; }
+    if(currentView === 'week') renderWeek();
+    else renderMonth();
+    if(!_firstShown) {
+      _firstShown = true;
+      if(currentView === 'week') scrollToToday(true);
+    }
+  });
+}
+
+function showLoading() {
+  document.getElementById('empty-state').style.display = 'none';
+  const g = document.getElementById(currentView === 'week' ? 'grid' : 'month-grid');
+  if(!g.querySelector('.loading-msg'))
+    g.innerHTML = '<div class="loading-msg" style="padding:60px 20px;text-align:center;color:var(--text3);font-size:13px;font-weight:600;grid-column:1/-1">불러오는 중...</div>';
+}
+
+function markLoaded(k) {
+  if(_loaded[k]) return;
+  _loaded[k] = true;
 }
 
 /* ══════════════════════════════
@@ -2143,12 +2171,12 @@ function startListening() {
       ordered.forEach(s=>{ if(DEFAULT_HIDDEN.some(n=>s.name.includes(n))) hiddenStaff.add(s.id); });
       saveHiddenLocal(); localStorage.setItem('quetta_hidden_init','1');
     }
-    staff=ordered; saveStaffLocal(); render(); renderStaffModal();
+    staff=ordered; saveStaffLocal(); markLoaded('staff'); render(); renderStaffModal();
   });
   db.ref('schedules').on('value',snap=>{
     const val=snap.val()||{}; schedules={};
     for(const[dk,items] of Object.entries(val)) schedules[dk]=Object.values(items);
-    render();
+    markLoaded('schedules'); render();
   });
   db.ref('todos').on('value',snap=>{
     const val=snap.val()||{}; todos={};
@@ -2157,7 +2185,7 @@ function startListening() {
         todos[`${staffId}_${dk}`]=Object.values(items);
       }
     }
-    render();
+    markLoaded('todos'); render();
   });
 
   db.ref('backlogs').on('value',snap=>{
@@ -2165,7 +2193,7 @@ function startListening() {
     for(const[staffId,items] of Object.entries(val)){
       backlogs[staffId]=Object.values(items);
     }
-    render();
+    markLoaded('backlogs'); render();
   });
 }
 
@@ -2216,7 +2244,9 @@ function goToDate(dk){
 function closeSearchResults(){ document.getElementById('search-results').classList.remove('on'); }
 function jumpToDate(){ const val=document.getElementById('date-jump-input').value; if(!val){toast('날짜를 선택하세요','err');return;} goToDate(val); }
 function clearSearch(){ document.getElementById('search-input').value=''; document.getElementById('search-clear').classList.remove('on'); closeSearchResults(); }
-function scrollToToday(){ const tr=document.querySelector('.day-row.today-row'); if(tr) setTimeout(()=>tr.scrollIntoView({behavior:'smooth',block:'center'}),100); }
+function scrollToToday(instant){
+  setTimeout(()=>{ const tr=document.querySelector('.day-row.today-row'); if(tr) tr.scrollIntoView({behavior:instant?'auto':'smooth',block:'center'}); }, instant?0:100);
+}
 
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 // onclick 안의 '...' 인자용: 따옴표·역슬래시 처리 후 HTML 이스케이프
@@ -2263,7 +2293,7 @@ window.onload=()=>{
   }
   setView('week');
   const ok=initFirebase();
-  if(ok){ startListening(); setTimeout(scrollToToday,800); }
+  if(ok){ startListening(); setTimeout(()=>{ Object.keys(_loaded).forEach(k=>_loaded[k]=true); render(); }, 5000); }
   else{ render(); setTimeout(scrollToToday,200); }
 };
 </script>
