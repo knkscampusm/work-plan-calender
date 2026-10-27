@@ -1299,11 +1299,11 @@ function renderWeek() {
       const bl = backlogs[s.id] || [];
       const blCount = bl.length;
       const blBtn = blCount === 0
-        ? `<button class="wh-backlog-btn empty" onclick="openBacklogModal('${s.id}','${escHtml(s.name)}')" title="백로그">🥕</button>`
-        : `<button class="wh-backlog-btn has-items" onclick="openBacklogModal('${s.id}','${escHtml(s.name)}')" title="백로그 ${blCount}건">${blCount}</button>`;
+        ? `<button class="wh-backlog-btn empty" onclick="openBacklogModal('${s.id}','${jsArg(s.name)}')" title="백로그">🥕</button>`
+        : `<button class="wh-backlog-btn has-items" onclick="openBacklogModal('${s.id}','${jsArg(s.name)}')" title="백로그 ${blCount}건">${blCount}</button>`;
       return `
       <div class="wh-staff">
-        <button class="wh-req-btn" onclick="openRequestModalTo('${s.id}','${escHtml(s.name)}')" title="업무요청">📋</button><span class="wh-staff-name">${escHtml(s.name)}</span>${blBtn}
+        <button class="wh-req-btn" onclick="openRequestModalTo('${s.id}','${jsArg(s.name)}')" title="업무요청">📋</button><span class="wh-staff-name">${escHtml(s.name)}</span>${blBtn}
       </div>
     `;
     }).join('');
@@ -1442,7 +1442,7 @@ function renderMonth() {
       const normalBadge  = normalCnt  > 0 ? `<span class="month-staff-count">${normalCnt}건</span>` : '';
       const requestBadge = requestCnt > 0 ? `<span class="month-req-count">${requestCnt}건</span>` : '';
       return `<div class="month-staff-row"
-        onclick="event.stopPropagation();openMonthPopup('${sv.id}','${dk}','${escHtml(sv.name)}','${color}')">
+        onclick="event.stopPropagation();openMonthPopup('${sv.id}','${dk}','${jsArg(sv.name)}','${color}')">
         <span class="month-staff-name">${escHtml(sv.name)}</span>
         ${normalBadge}${requestBadge ? `<span class="month-count-sep">/</span>${requestBadge}` : ''}
       </div>`;
@@ -2214,6 +2214,8 @@ function clearSearch(){ document.getElementById('search-input').value=''; docume
 function scrollToToday(){ const tr=document.querySelector('.day-row.today-row'); if(tr) setTimeout(()=>tr.scrollIntoView({behavior:'smooth',block:'center'}),100); }
 
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// onclick 안의 '...' 인자용: 따옴표·역슬래시 처리 후 HTML 이스케이프
+function jsArg(s){ return escHtml(String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'")); }
 
 let _tt;
 function toast(msg,type=''){ const el=document.getElementById('toast'); el.textContent=msg; el.className=`toast on ${type}`; clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('on'),2500); }
