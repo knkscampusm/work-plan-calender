@@ -1044,7 +1044,7 @@ input, textarea { font-family: inherit; }
     <div class="modal-body">
       <div class="backlog-list" id="backlog-list"></div>
       <div class="backlog-add-row">
-        <input class="backlog-add-input" id="backlog-add-input" placeholder="백로그 항목 추가..." maxlength="80"
+        <input class="backlog-add-input" id="backlog-add-input" placeholder="백로그 항목 추가..."
           onkeydown="if(event.key==='Enter')addBacklogItem()">
         <button class="backlog-add-btn" onclick="addBacklogItem()">추가</button>
       </div>
@@ -1113,7 +1113,7 @@ input, textarea { font-family: inherit; }
     <div class="modal-body" style="padding:16px;display:flex;flex-direction:column;gap:12px">
       <textarea id="edit-modal-input" class="modal-input"
         style="resize:vertical;min-height:80px;padding:9px 12px;font-size:13px;line-height:1.6"
-        maxlength="200" placeholder="할일 내용 입력"></textarea>
+        placeholder="할일 내용 입력"></textarea>
       <div id="edit-cal-wrap"></div>
       <div class="edit-modal-footer">
         <button class="btn-date-change" id="btn-date-change" onclick="toggleDatePicker()">📅 일정 변경</button>
@@ -1139,7 +1139,7 @@ input, textarea { font-family: inherit; }
     </div>
     <div class="month-popup-body" id="popup-body"></div>
     <div class="month-popup-add">
-      <input class="month-popup-input" id="popup-add-input" placeholder="할일 추가..." maxlength="60"
+      <input class="month-popup-input" id="popup-add-input" placeholder="할일 추가..."
         onkeydown="if(event.key==='Enter')popupAddTodo()">
       <button class="month-popup-add-btn" onclick="popupAddTodo()">추가</button>
     </div>
@@ -1588,7 +1588,7 @@ function startAdd(staffId, dk, btn) {
   btn.style.display='none';
   const wrap = document.createElement('div');
   wrap.className='inline-input-wrap';
-  wrap.innerHTML=`<input class="inline-input" placeholder="할일 입력" maxlength="60" autofocus><button class="inline-ok">↵</button>`;
+  wrap.innerHTML=`<input class="inline-input" placeholder="할일 입력" autofocus><button class="inline-ok">↵</button>`;
   btn.parentElement.insertBefore(wrap, btn);
   const inp=wrap.querySelector('input'), ok=wrap.querySelector('button');
   inp.focus();
