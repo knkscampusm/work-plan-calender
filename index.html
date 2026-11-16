@@ -938,6 +938,54 @@ input, textarea { font-family: inherit; }
   font-size: 13px; font-weight: 700; cursor: pointer; transition: background .12s;
 }
 .backlog-move-confirm:hover { background: #0f766e; }
+
+/* ── 바로가기(웹사이트 목록) ── */
+.links-wrap { position: relative; }
+.btn-links {
+  width: 30px; height: 30px; padding: 0;
+  background: var(--bg3); border: 1px solid var(--border2); border-radius: 7px;
+  color: var(--text2); display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.btn-links:hover, .btn-links.on { background: var(--teal-dim); color: var(--teal); border-color: var(--teal); }
+.links-panel {
+  display: none; position: absolute; top: calc(100% + 6px); right: 0;
+  width: 320px; max-width: 92vw; background: var(--white);
+  border: 1px solid var(--border2); border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.14); z-index: 400; overflow: hidden;
+}
+.links-panel.on { display: block; }
+.links-hd { padding: 10px 14px; font-size: 12px; font-weight: 700; color: var(--text2); border-bottom: 1px solid var(--border); }
+.links-list { max-height: 340px; overflow-y: auto; padding: 6px; }
+.link-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border-radius: 8px; cursor: pointer; transition: background .1s;
+}
+.link-item:hover { background: var(--teal-dim2); }
+.link-text { flex: 1; min-width: 0; }
+.link-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.link-item:hover .link-name { color: var(--teal); }
+.link-url { font-size: 10px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'DM Mono', monospace; }
+.link-del {
+  width: 22px; height: 22px; border: none; background: transparent; border-radius: 5px;
+  color: var(--text3); font-size: 11px; opacity: 0; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; transition: all .12s;
+}
+.link-item:hover .link-del { opacity: 1; }
+.link-del:hover { background: var(--red-dim); color: var(--red); }
+.links-empty { padding: 16px; text-align: center; font-size: 12px; color: var(--text3); }
+.links-add { border-top: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 6px; background: var(--bg2); }
+.links-add input {
+  width: 100%; padding: 7px 10px; background: var(--white);
+  border: 1.5px solid var(--border2); border-radius: 7px;
+  font-size: 12px; color: var(--text); outline: none; transition: border-color .12s;
+}
+.links-add input:focus { border-color: var(--teal); }
+.links-add button {
+  padding: 7px; background: var(--teal); color: #fff; border: none;
+  border-radius: 7px; font-size: 12px; font-weight: 700; transition: background .12s;
+}
+.links-add button:hover { background: #0f766e; }
 </style>
 </head>
 <body>
@@ -975,6 +1023,20 @@ input, textarea { font-family: inherit; }
       <button class="date-jump-btn" onclick="jumpToDate()">이동</button>
     </div>
     <button class="btn-staff" onclick="openStaffModal()">👥</button>
+    <div class="links-wrap">
+      <button class="btn-links" id="btn-links" onclick="toggleLinks()" title="바로가기">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </button>
+      <div class="links-panel" id="links-panel">
+        <div class="links-hd">바로가기</div>
+        <div class="links-list" id="links-list"></div>
+        <div class="links-add">
+          <input id="link-name-input" placeholder="보이는 이름" onkeydown="if(event.key==='Enter')document.getElementById('link-url-input').focus()">
+          <input id="link-url-input" placeholder="URL (예: https://...)" onkeydown="if(event.key==='Enter')addLink()">
+          <button onclick="addLink()">추가</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1306,7 +1368,7 @@ let _cacheTimer;
 function saveCache() {
   clearTimeout(_cacheTimer);
   _cacheTimer = setTimeout(() => {
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ schedules, todos, backlogs })); }
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ schedules, todos, backlogs, links })); }
     catch(e) { try { localStorage.removeItem(CACHE_KEY); } catch(_){} }
   }, 1000);
 }
@@ -1317,6 +1379,7 @@ function loadCache() {
     schedules = c.schedules || {};
     todos = c.todos || {};
     backlogs = c.backlogs || {};
+    links = c.links || [];
     Object.keys(_loaded).forEach(k => _loaded[k] = true);
     return true;
   } catch(e) { return false; }
@@ -2171,6 +2234,73 @@ async function confirmBacklogMove() {
   toast(`${formatDkDisplay(dk)}으로 이동됨 ✓`, 'ok');
 }
 /* ══════════════════════════════
+   바로가기(웹사이트 목록)
+══════════════════════════════ */
+let links = [];
+
+function toggleLinks() {
+  const panel = document.getElementById('links-panel');
+  const on = !panel.classList.contains('on');
+  panel.classList.toggle('on', on);
+  document.getElementById('btn-links').classList.toggle('on', on);
+  if(on) renderLinks();
+}
+function closeLinks() {
+  document.getElementById('links-panel').classList.remove('on');
+  document.getElementById('btn-links').classList.remove('on');
+}
+
+function renderLinks() {
+  const list = document.getElementById('links-list');
+  if(!list) return;
+  if(links.length === 0) { list.innerHTML = '<div class="links-empty">등록된 사이트가 없습니다</div>'; return; }
+  list.innerHTML = links.map(l => `
+    <div class="link-item" onclick="openLink('${l.id}')" title="${escHtml(l.url)}">
+      <div class="link-text">
+        <div class="link-name">${escHtml(l.name)}</div>
+        <div class="link-url">${escHtml(l.url)}</div>
+      </div>
+      <button class="link-del" onclick="event.stopPropagation();deleteLink('${l.id}')" title="삭제">✕</button>
+    </div>`).join('');
+}
+
+function openLink(id) {
+  const l = links.find(x => x.id === id);
+  if(!l) return;
+  window.open(l.url, '_blank', 'noopener');
+}
+
+function normalizeUrl(u) {
+  u = u.trim();
+  if(!u) return '';
+  if(!/^[a-z][a-z0-9+.-]*:/i.test(u)) u = 'https://' + u;
+  return /^https?:\/\//i.test(u) ? u : '';
+}
+
+async function addLink() {
+  const nameInp = document.getElementById('link-name-input');
+  const urlInp  = document.getElementById('link-url-input');
+  const url  = normalizeUrl(urlInp.value);
+  if(!url) { toast('URL을 확인하세요','err'); urlInp.focus(); return; }
+  const name = nameInp.value.trim() || url.replace(/^https?:\/\//i,'');
+  const id = 'lk_' + Date.now().toString(36) + Math.random().toString(36).slice(2,4);
+  const item = { id, name, url, createdAt: Date.now() };
+  links.push(item);
+  nameInp.value = ''; urlInp.value = '';
+  renderLinks(); nameInp.focus();
+  if(db) { try { await db.ref(`links/${id}`).set(item); } catch(e) { toast('저장 실패','err'); } }
+}
+
+async function deleteLink(id) {
+  const l = links.find(x => x.id === id);
+  if(!l) return;
+  if(!confirm(`'${l.name}'을(를) 삭제할까요?`)) return;
+  links = links.filter(x => x.id !== id);
+  renderLinks();
+  if(db) { try { await db.ref(`links/${id}`).remove(); } catch(e) {} }
+}
+
+/* ══════════════════════════════
    Firebase 리스닝
 ══════════════════════════════ */
 function startListening() {
@@ -2208,6 +2338,12 @@ function startListening() {
       }
     }
     markLoaded('todos'); saveCache(); render();
+  });
+
+  db.ref('links').on('value',snap=>{
+    const val=snap.val()||{};
+    links=Object.values(val).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    saveCache(); renderLinks();
   });
 
   db.ref('backlogs').on('value',snap=>{
@@ -2290,8 +2426,8 @@ function closeTextModal(){ document.getElementById('text-modal').classList.remov
 
 window.addEventListener('resize',()=>{ if(currentView==='week'){ const hdrH=document.getElementById('hdr').offsetHeight; document.getElementById('week-hdr').style.top=hdrH+'px'; } });
 
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeStaffModal(); closeTextModal(); closeSearchResults(); closeEditModal(); closeMonthPopup(); closeBacklogModal(); closeBacklogMoveModal(); } });
-document.addEventListener('click',e=>{ const sr=document.getElementById('search-results'); if(sr&&!e.target.closest('.search-wrap')) closeSearchResults(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeLinks(); closeStaffModal(); closeTextModal(); closeSearchResults(); closeEditModal(); closeMonthPopup(); closeBacklogModal(); closeBacklogMoveModal(); } });
+document.addEventListener('click',e=>{ const sr=document.getElementById('search-results'); if(sr&&!e.target.closest('.search-wrap')) closeSearchResults(); if(!e.target.closest('.links-wrap')) closeLinks(); });
 
 /* ══════════════════════════════
    INIT
