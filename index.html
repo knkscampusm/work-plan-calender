@@ -973,6 +973,17 @@ input, textarea { font-family: inherit; }
 }
 .link-item:hover .link-del { opacity: 1; }
 .link-del:hover { background: var(--red-dim); color: var(--red); }
+.link-ctx {
+  display: none; position: fixed; z-index: 700; min-width: 110px;
+  background: var(--white); border: 1px solid var(--border2); border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.15); padding: 4px;
+}
+.link-ctx.on { display: block; }
+.link-ctx button {
+  width: 100%; text-align: left; padding: 7px 10px; border: none; background: transparent;
+  border-radius: 5px; font-size: 12px; font-weight: 600; color: var(--red);
+}
+.link-ctx button:hover { background: var(--red-dim); }
 .links-empty { padding: 16px; text-align: center; font-size: 12px; color: var(--text3); }
 .links-add { border-top: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 6px; background: var(--bg2); }
 .links-add input {
@@ -1213,6 +1224,8 @@ input, textarea { font-family: inherit; }
     </div>
   </div>
 </div>
+
+<div class="link-ctx" id="link-ctx"><button onclick="ctxDeleteLink()">삭제</button></div>
 
 <div id="toast"></div>
 
@@ -2255,14 +2268,26 @@ function renderLinks() {
   if(!list) return;
   if(links.length === 0) { list.innerHTML = '<div class="links-empty">등록된 사이트가 없습니다</div>'; return; }
   list.innerHTML = links.map(l => `
-    <div class="link-item" onclick="openLink('${l.id}')" title="${escHtml(l.url)}">
+    <div class="link-item" onclick="openLink('${l.id}')" oncontextmenu="openLinkMenu(event,'${l.id}')" title="${escHtml(l.url)}">
       <div class="link-text">
         <div class="link-name">${escHtml(l.name)}</div>
         <div class="link-url">${escHtml(l.url)}</div>
       </div>
-      <button class="link-del" onclick="event.stopPropagation();deleteLink('${l.id}')" title="삭제">✕</button>
     </div>`).join('');
 }
+
+let _ctxLinkId = null;
+function openLinkMenu(e, id) {
+  e.preventDefault(); e.stopPropagation();
+  _ctxLinkId = id;
+  const m = document.getElementById('link-ctx');
+  m.classList.add('on');
+  const w = m.offsetWidth, h = m.offsetHeight;
+  m.style.left = Math.min(e.clientX, window.innerWidth - w - 6) + 'px';
+  m.style.top  = Math.min(e.clientY, window.innerHeight - h - 6) + 'px';
+}
+function closeLinkMenu() { document.getElementById('link-ctx').classList.remove('on'); _ctxLinkId = null; }
+function ctxDeleteLink() { const id = _ctxLinkId; closeLinkMenu(); if(id) deleteLink(id); }
 
 function openLink(id) {
   const l = links.find(x => x.id === id);
@@ -2426,8 +2451,8 @@ function closeTextModal(){ document.getElementById('text-modal').classList.remov
 
 window.addEventListener('resize',()=>{ if(currentView==='week'){ const hdrH=document.getElementById('hdr').offsetHeight; document.getElementById('week-hdr').style.top=hdrH+'px'; } });
 
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeLinks(); closeStaffModal(); closeTextModal(); closeSearchResults(); closeEditModal(); closeMonthPopup(); closeBacklogModal(); closeBacklogMoveModal(); } });
-document.addEventListener('click',e=>{ const sr=document.getElementById('search-results'); if(sr&&!e.target.closest('.search-wrap')) closeSearchResults(); if(!e.target.closest('.links-wrap')) closeLinks(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeLinkMenu(); closeLinks(); closeStaffModal(); closeTextModal(); closeSearchResults(); closeEditModal(); closeMonthPopup(); closeBacklogModal(); closeBacklogMoveModal(); } });
+document.addEventListener('click',e=>{ const sr=document.getElementById('search-results'); if(sr&&!e.target.closest('.search-wrap')) closeSearchResults(); if(!e.target.closest('#link-ctx')) closeLinkMenu(); if(!e.target.closest('.links-wrap') && !e.target.closest('#link-ctx')) closeLinks(); });
 
 /* ══════════════════════════════
    INIT
